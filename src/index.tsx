@@ -1,105 +1,83 @@
-import {
-  ButtonItem,
-  definePlugin,
-  DialogButton,
-  Menu,
-  MenuItem,
-  PanelSection,
-  PanelSectionRow,
-  Router,
-  ServerAPI,
-  showContextMenu,
-  staticClasses,
+import
+{
+	definePlugin,
+	PanelSection,
+	PanelSectionRow,
+	ServerAPI,
+	staticClasses,
+	findModuleChild,
+	findInReactTree
 } from "decky-frontend-lib";
 import { VFC } from "react";
-import { FaShip } from "react-icons/fa";
+import { FaKeyboard } from "react-icons/fa";
+import { log } from "./logger";
+import * as python from './python';
+import * as keys from './keys';
+import { Settings } from "./types/settings";
 
-import logo from "../assets/logo.png";
-
-// interface AddMethodArgs {
-//   left: number;
-//   right: number;
-// }
-
-const Content: VFC<{ serverAPI: ServerAPI }> = ({}) => {
-  // const [result, setResult] = useState<number | undefined>();
-
-  // const onClick = async () => {
-  //   const result = await serverAPI.callPluginMethod<AddMethodArgs, number>(
-  //     "add",
-  //     {
-  //       left: 2,
-  //       right: 2,
-  //     }
-  //   );
-  //   if (result.success) {
-  //     setResult(result.result);
-  //   }
-  // };
-
-  return (
-    <PanelSection title="Panel Section">
-      <PanelSectionRow>
-        <ButtonItem
-          layout="below"
-          onClick={(e) =>
-            showContextMenu(
-              <Menu label="Menu" cancelText="CAAAANCEL" onCancel={() => {}}>
-                <MenuItem onSelected={() => {}}>Item #1</MenuItem>
-                <MenuItem onSelected={() => {}}>Item #2</MenuItem>
-                <MenuItem onSelected={() => {}}>Item #3</MenuItem>
-              </Menu>,
-              e.currentTarget ?? window
-            )
-          }
-        >
-          Server says yolo
-        </ButtonItem>
-      </PanelSectionRow>
-
-      <PanelSectionRow>
-        <div style={{ display: "flex", justifyContent: "center" }}>
-          <img src={logo} />
-        </div>
-      </PanelSectionRow>
-
-      <PanelSectionRow>
-        <ButtonItem
-          layout="below"
-          onClick={() => {
-            Router.CloseSideMenus();
-            Router.Navigate("/decky-plugin-test");
-          }}
-        >
-          Router
-        </ButtonItem>
-      </PanelSectionRow>
-    </PanelSection>
-  );
+const Content: VFC<{ serverAPI: ServerAPI }> = ({ }) =>
+{
+	return (
+		<PanelSection title="Panel Section">
+			<PanelSectionRow>
+			</PanelSectionRow>
+		</PanelSection>
+	);
 };
 
-const DeckyPluginRouterTest: VFC = () => {
-  return (
-    <div style={{ marginTop: "50px", color: "white" }}>
-      Hello World!
-      <DialogButton onClick={() => Router.NavigateToStore()}>
-        Go to Store
-      </DialogButton>
-    </div>
-  );
+const PluginSettings: Settings = {
+	DictationEnabled: false,
+	EnableFunctionKeys: false,
+	EnableCtrlKey: false,
+	EnableOrientationSwapKey: true
 };
 
-export default definePlugin((serverApi: ServerAPI) => {
-  serverApi.routerHook.addRoute("/decky-plugin-test", DeckyPluginRouterTest, {
-    exact: true,
-  });
-
-  return {
-    title: <div className={staticClasses.Title}>Example Plugin</div>,
-    content: <Content serverAPI={serverApi} />,
-    icon: <FaShip />,
-    onDismount() {
-      serverApi.routerHook.removeRoute("/decky-plugin-test");
-    },
-  };
+const KeyboardManager = findModuleChild((m) => {
+	if (typeof m !== "object") return undefined;
+	for (let prop in m) {
+		if (m[prop]?.m_WindowStore) 
+			return m[prop].ActiveWindowInstance.VirtualKeyboardManager;
+	}
 });
+
+export default definePlugin((serverApi: ServerAPI) =>
+{
+	python.setServer(serverApi);
+	keys.setServer(serverApi);
+	keys.setSettings(PluginSettings)
+	var KeyboardOpenedCallback: any;
+
+	function OnCallback(e: boolean) {
+		log("isOpened", e)
+		if (!e) return;
+
+		setTimeout(() => {
+			let instance = findInReactTree(
+				(document.getElementById('root') as any)._reactRootContainer._internalRoot.current, 
+				((x) => x?.memoizedProps?.className?.startsWith('virtualkeyboard_Keyboard'))
+			);			
+			log("keyboardInstance", instance);
+			if (instance) keys.PatchKeys(instance);
+		}, 1000);
+	}
+
+	function OnDismount() {
+		KeyboardOpenedCallback?.Unregister();
+	}
+
+	function OnMount() {
+		KeyboardOpenedCallback = KeyboardManager.m_bIsVirtualKeyboardOpen.m_callbacks.Register(OnCallback)
+	}
+
+	OnMount();
+
+	return {
+		title: <div className={staticClasses.Title}>DeckyBoard</div>,
+		content: <Content serverAPI={serverApi} />,
+		icon: <FaKeyboard />,
+		onDismount: OnDismount,
+	};
+});
+
+
+
