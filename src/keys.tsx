@@ -1,14 +1,13 @@
 import { beforePatch } from "decky-frontend-lib";
-import React, { VFC } from "react";
-import { FaShip, FaMicrophone, FaArrowsAltV } from "react-icons/fa";
+import { FaMicrophone, FaArrowUp } from "react-icons/fa";
 import { log } from "./logger";
-import * as python from './python';
-import * as icons from './icons';
 import { Settings } from './types/settings';
+import * as dictation from './keys/dictation';
+import * as orientation from './keys/orientation';
+import { KeyDefinition, KeyMapping } from './types/key';
 
-var dictateListening = false;
+
 var KeyboardRoot: any;
-var isTopsided = false;
 
 import { ServerAPI } from "decky-frontend-lib";
 
@@ -35,10 +34,14 @@ export function PatchKeys(instance: any) {
     return;
 }
 
-function RemoveKey(rN: number, value: any) {
+
+
+
+function RemoveKey(value: KeyMapping) {
     var i = 0;
+    var rN = value.row;
     while (i < KeyboardRoot.stateNode.state.standardLayout.rgLayout[rN].length) {
-      if (KeyboardRoot.stateNode.state.standardLayout.rgLayout[rN][i].key === value) {
+      if (KeyboardRoot.stateNode.state.standardLayout.rgLayout[rN][i].key === value.definition.key) {
         KeyboardRoot.stateNode.state.standardLayout.rgLayout[rN].splice(i, 1);
       } else {
         ++i;
@@ -46,42 +49,59 @@ function RemoveKey(rN: number, value: any) {
     }
 }
 
-function AddKey(rN: number, value: any) {
-    KeyboardRoot.stateNode.state.standardLayout.rgLayout[rN].unshift(value);
+function ChangeKeyLabel(value: KeyMapping, label: any) {
+    var rN = value.row;
+    for (let i = 0; i < KeyboardRoot.stateNode.state.standardLayout.rgLayout[rN].length; i++) 
+    {
+      if (KeyboardRoot.stateNode.state.standardLayout.rgLayout[rN][i].key === value.definition.key)  {
+          KeyboardRoot.stateNode.state.standardLayout.rgLayout[rN][i].label = label; 
+      }
+    }
 }
 
+export function ChangeKeyLabelById(value: string, label: any) {
+    let result = KeyMappings.get(value);
+    if (result) ChangeKeyLabel(result, label);
+}
+
+function AddKey(value: KeyMapping | undefined) {
+    if (value) {
+        let index = value.offset;
+        KeyboardRoot.stateNode.state.standardLayout.rgLayout[value?.row].splice(index, 0 ,value?.definition);
+    }
+}
+
+const KeyMappings: Map<string, KeyMapping> = new Map<string, KeyMapping>([
+    ["dictation_key",       { row: 4,  offset: 1,  definition: { key: "SwitchKeys_Dicate", label: <FaMicrophone />, type: 4 }}],
+    ["alt_key",             { row: 4,  offset: 0,  definition: { key: "SwitchKeys_Alt", label: "#Key_Alt", type: 5 }}],
+    ["ctrl_key",            { row: 4,  offset: 0,  definition: { key: "SwitchKeys_Control", label: "#Key_Control", type: 5 }}],
+    ["esc_key",             { row: 0,  offset: 0,  definition: { key: "SwitchKeys_Escape", label: "#Key_Escape", type: 4 }}],
+    ["orientation_key",     { row: 4,  offset: -1, definition: { key: "SwitchKeys_Orientation", label: <FaArrowUp />, type: 4 }}],
+  //["function_f1_key",     { row: 0,  offset: 0,  definition: { key: "", label: "#KeyboardKey_F1",  type: 5}}],
+]);
+
 function UpdateKeyPlacement() {
-
     //log("keys", KeyboardRoot)
-    log("keys", KeyboardRoot.stateNode.state.standardLayout.rgLayout);
+    //log("keys", KeyboardRoot.stateNode.state.standardLayout.rgLayout);
 
-    var dictateKey = { key: "SwitchKeys_Dicate", label: <FaMicrophone />, type: 4 };
-    var ctrlKey = { key: "Control", label: "#Key_Control", type: 5 };
-    var orientationKey = { key: "SwitchKeys_Orientation", label: <FaArrowsAltV />, type: 4 };
-    var f1Key = {key: "", label: "#KeyboardKey_F1",  type: 5};
-    var escKey = { key: "Escape", label: "#Key_Escape", type: 5 };
+    orientation.Init(KeyboardRoot);
 
-    RemoveKey(4, dictateKey.key);
-    if (settings?.DictationEnabled) AddKey(4, dictateKey);
+    KeyMappings.forEach(function (value) {
+        RemoveKey(value)
+    }); 
 
-    RemoveKey(4, ctrlKey.key);
-    if (settings?.EnableCtrlKey) AddKey(4, ctrlKey);
-
-    RemoveKey(4, orientationKey.key);
-    if (settings?.EnableOrientationSwapKey) AddKey(4, orientationKey);
-
-    RemoveKey(0, f1Key.key);
-    if (settings?.EnableFunctionKeys) AddKey(0, f1Key);
-
-    RemoveKey(0, escKey.key);
-    if (settings?.EnableFunctionKeys) AddKey(0, escKey);
+    if (settings?.DictationEnabled) AddKey(KeyMappings.get("dictation_key"));
+    if (settings?.EnableAltKey) AddKey(KeyMappings.get("alt_key"));
+    if (settings?.EnableCtrlKey) AddKey(KeyMappings.get("ctrl_key"));
+    if (settings?.EnableEscKey) AddKey(KeyMappings.get("esc_key"));
+    if (settings?.EnableOrientationSwapKey) AddKey(KeyMappings.get("orientation_key"));
+    //if (settings?.EnableFunctionKeys) AddKey(KeyMappings.get("function_f1_key"));
 
 }
 
 function OnType(e: any[]) {
-
     const key = e[0];
-    log("key", key);
+    //log("key", key);
 
     //if (key.strKey == "SwitchKeys_")
     //{
@@ -89,39 +109,10 @@ function OnType(e: any[]) {
     //        .then((data) => console.log(data));
     //}
 
-    if (key.strKey == "SwitchKeys_Orientation") OnOrientationKey();
-    if (settings?.DictationEnabled && key.strKey == "SwitchKeys_Dicate") OnDictateKey();
+    if (key.strKey == KeyMappings.get("orientation_key")?.definition.key) 
+        orientation.OnOrientationKey(KeyboardRoot);
+
+    if (settings?.DictationEnabled && key.strKey == KeyMappings.get("dictation_key")?.definition.key) 
+        dictation.ToggleDictation(KeyboardRoot);
 }
 
-function OnOrientationKey() {
-        
-}
-
-function OnDictateKey() {
-    if (!dictateListening)
-    {
-        dictateListening = true;
-        var response = server?.callPluginMethod<any, boolean>("startDictation", {});
-        log("startDictation", response)
-
-        // serverApi.fetchNoCors('http://localhost:9000/hooks/start-dictate')
-        //   .then((data) => console.log(data));
-        KeyboardRoot.stateNode.state.standardLayout.rgLayout[4][1].label = <icons.ActiveIcon />;
-        server?.toaster.toast({
-            title: "Listening...",
-            body: "Dictation started!"
-        });
-    } else
-    {
-        dictateListening = false;
-        var response = server?.callPluginMethod<any, boolean>("endDictation", {});
-        log("endDictate", response)
-        // serverApi.fetchNoCors('http://localhost:9000/hooks/end-dictate')
-        //   .then((data) => console.log(data));
-        KeyboardRoot.stateNode.state.standardLayout.rgLayout[4][1].label = <FaMicrophone />;
-        server?.toaster.toast({
-            title: "Finished Listening.",
-            body: "Dictation finished!"
-        });
-    }
-}

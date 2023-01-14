@@ -14,6 +14,8 @@ import { log } from "./logger";
 import * as python from './python';
 import * as keys from './keys';
 import { Settings } from "./types/settings";
+import * as keys_dictation from "./keys/dictation";
+import * as keys_orientation from "./keys/orientation";
 
 const Content: VFC<{ serverAPI: ServerAPI }> = ({ }) =>
 {
@@ -29,6 +31,8 @@ const PluginSettings: Settings = {
 	DictationEnabled: false,
 	EnableFunctionKeys: false,
 	EnableCtrlKey: false,
+	EnableAltKey: false,
+	EnableEscKey: false,
 	EnableOrientationSwapKey: true
 };
 
@@ -42,9 +46,7 @@ const KeyboardManager = findModuleChild((m) => {
 
 export default definePlugin((serverApi: ServerAPI) =>
 {
-	python.setServer(serverApi);
-	keys.setServer(serverApi);
-	keys.setSettings(PluginSettings)
+
 	var KeyboardOpenedCallback: any;
 
 	function OnCallback(e: boolean) {
@@ -66,6 +68,13 @@ export default definePlugin((serverApi: ServerAPI) =>
 	}
 
 	function OnMount() {
+		python.setServer(serverApi);
+		keys.setServer(serverApi);
+		keys_orientation.setServer(serverApi);
+		keys_orientation.setServer(serverApi);
+
+		keys.setSettings(PluginSettings);
+
 		KeyboardOpenedCallback = KeyboardManager.m_bIsVirtualKeyboardOpen.m_callbacks.Register(OnCallback)
 	}
 

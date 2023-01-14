@@ -33,32 +33,6 @@ class Plugin:
 
     #endregion
 
-    #region OSK
-
-    async def _updateOSK(self, options):
-        cssStyles = ".virtualkeyboard_VirtualKeyboardContainer_33MO2"
-        cssStyles += "{"
-
-        if options.OSK_VERTICALALIGNMENT_TOP:
-            cssStyles += "position: absolute;"
-
-        if options.OSK_OPACITY == 10:
-            cssStyles += "opacity: 1.0;"
-        else:
-            cssStyles += "opacity: 0.{};".format(options.OSK_OPACITY)
-
-        cssStyles += "}"
-            
-
-        if options.OSK_STYLESHEET_ID != None:
-            pluginManagerUtils.remove_css_from_tab("SP", options.OSK_STYLESHEET_ID)
-        
-        self.OSK_STYLESHEET_ID = pluginManagerUtils.inject_css_into_tab("SP", cssStyles)
-        
-        pass
-        
-    #endregion
-
     async def _main(self):
         logger.debug("Starting ydotoold")
         self.ydotoold_process = Popen([os.path.join(os.path.dirname(__file__), "out/ydotoold")])
