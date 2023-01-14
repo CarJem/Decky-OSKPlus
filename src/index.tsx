@@ -72,6 +72,7 @@ export default definePlugin((serverApi: ServerAPI) =>
 		keys.setServer(serverApi);
 		keys_orientation.setServer(serverApi);
 		keys_orientation.setServer(serverApi);
+		keys_dictation.setServer(serverApi);
 
 		keys.setSettings(PluginSettings);
 

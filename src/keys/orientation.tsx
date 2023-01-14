@@ -1,4 +1,4 @@
-import { beforePatch, ServerAPI, findSP } from "decky-frontend-lib";
+import { beforePatch, ServerAPI, findSP, findModule } from "decky-frontend-lib";
 import {  } from "decky-frontend-lib";
 import React, { VFC } from "react";
 import { FaArrowUp, FaArrowDown } from "react-icons/fa";
@@ -9,6 +9,18 @@ import { ChangeKeyLabelById } from "../keys";
 var server: ServerAPI | undefined = undefined;
 var orientation: boolean = false;
 
+
+type VirtualKeyboardContainerClasses = Record <
+  | 'VirtualKeyboardStandaloneContainer'
+  | 'VirtualKeyboardContainer'
+  | 'keyboard_appear',
+  string
+>;
+
+export const virtualKeyboardContainerClasses: VirtualKeyboardContainerClasses = findModule(
+    (mod) => typeof mod === 'object' && mod?.VirtualKeyboardContainer?.includes('virtualkeyboardcontainer_'),
+);
+
 export function setServer(s: ServerAPI) {
   server = s;
 }
@@ -18,7 +30,7 @@ export function Init(KeyboardRoot: any) {
 }
 
 export function OnOrientationKey(KeyboardRoot: any) {
-    let className = "virtualkeyboardcontainer_VirtualKeyboardContainer_Oel3O";
+    let className = virtualKeyboardContainerClasses.VirtualKeyboardContainer;
 
     let osk = findSP().document.getElementsByClassName(className)[0];
     if (osk) {
