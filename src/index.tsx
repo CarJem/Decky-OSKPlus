@@ -12,10 +12,11 @@ import { VFC } from "react";
 import { FaKeyboard } from "react-icons/fa";
 import { log } from "./logger";
 import * as python from './python';
-import * as keys from './keys';
-import { Settings } from "./types/settings";
+import * as keys from './keyboard';
+import { PluginSettings } from "./types/settings";
 import * as keys_dictation from "./keys/dictation";
 import * as keys_orientation from "./keys/orientation";
+import * as style from "./style";
 
 const Content: VFC<{ serverAPI: ServerAPI }> = ({ }) =>
 {
@@ -27,13 +28,14 @@ const Content: VFC<{ serverAPI: ServerAPI }> = ({ }) =>
 	);
 };
 
-const PluginSettings: Settings = {
+const Settings: PluginSettings = {
 	DictationEnabled: false,
 	EnableFunctionKeys: false,
 	EnableCtrlKey: false,
 	EnableAltKey: false,
 	EnableEscKey: false,
-	EnableOrientationSwapKey: true
+	EnableOrientationSwapKey: true,
+	UnlockKeyboardMaxLength: false
 };
 
 const KeyboardManager = findModuleChild((m) => {
@@ -59,8 +61,8 @@ export default definePlugin((serverApi: ServerAPI) =>
 				((x) => x?.memoizedProps?.className?.startsWith('virtualkeyboard_Keyboard'))
 			);			
 			log("keyboardInstance", instance);
-			if (instance) keys.PatchKeys(instance);
-		}, 1000);
+			if (instance) keys.Init(instance);
+		}, 10);
 	}
 
 	function OnDismount() {
@@ -74,7 +76,8 @@ export default definePlugin((serverApi: ServerAPI) =>
 		keys_orientation.setServer(serverApi);
 		keys_dictation.setServer(serverApi);
 
-		keys.setSettings(PluginSettings);
+		keys.setSettings(Settings);
+		style.setSettings(Settings);
 
 		KeyboardOpenedCallback = KeyboardManager.m_bIsVirtualKeyboardOpen.m_callbacks.Register(OnCallback)
 	}
