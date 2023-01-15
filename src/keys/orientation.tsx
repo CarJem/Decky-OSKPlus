@@ -28,17 +28,26 @@ export function OnOrientationKey() {
 function UpdateStyle() {
     let className = virtualKeyboardContainerClasses.VirtualKeyboardContainer;
     let osk = findSP().document.getElementsByClassName(className)[0] as HTMLElement;
-    if (osk) {
+
+    let Footer = findSP().document.getElementById('Footer') as HTMLElement;
+    let Root = findSP().document.getElementById('root_1_') as HTMLElement;
+    let Core = findSP().document.getElementById('MainNavMenu-Rest') as HTMLElement;
+    
+    if (osk && Footer && Root && Core) {
+
+
         osk.style.backgroundColor = 'black';
         
         if (orientation) {
-            osk.style.position = 'absolute';
-            osk.style.width = '100%';
+            //osk.style.position = 'absolute';
+            //osk.style.width = '100%';
+            Core.insertBefore(osk, Root);
             ChangeKeyLabelById(KeyCode, <FaArrowDown/>)
         }
         else {
-            osk.style.position = '';
-            osk.style.width = '';
+            //osk.style.position = '';
+            //osk.style.width = '';
+            Core.insertBefore(osk, Footer.nextSibling);
             ChangeKeyLabelById(KeyCode, <FaArrowUp/>)
         }
     }
