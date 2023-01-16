@@ -12,10 +12,8 @@ import { VFC } from "react";
 import { FaKeyboard } from "react-icons/fa";
 import { log } from "./logger";
 import * as python from './python';
-import * as keys from './keyboard';
-import { PluginSettings } from "./types/settings";
-import * as keys_dictation from "./keys/dictation";
-import * as keys_orientation from "./keys/orientation";
+import * as keyboard from './keyboard';
+import { PluginSettings } from "./types/plugin-settings";
 import * as style from "./style";
 
 const Content: VFC<{ serverAPI: ServerAPI }> = ({ }) =>
@@ -61,7 +59,7 @@ export default definePlugin((serverApi: ServerAPI) =>
 				((x) => x?.memoizedProps?.className?.startsWith('virtualkeyboard_Keyboard'))
 			);			
 			log("keyboardInstance", instance);
-			if (instance) keys.Init(instance);
+			if (instance) keyboard.Init(instance);
 		}, 10);
 	}
 
@@ -71,14 +69,9 @@ export default definePlugin((serverApi: ServerAPI) =>
 
 	function OnMount() {
 		python.setServer(serverApi);
-		keys.setServer(serverApi);
-		keys_orientation.setServer(serverApi);
-		keys_orientation.setServer(serverApi);
-		keys_dictation.setServer(serverApi);
-
-		keys.setSettings(Settings);
+		keyboard.setServer(serverApi);
+		keyboard.setSettings(Settings);
 		style.setSettings(Settings);
-
 		KeyboardOpenedCallback = KeyboardManager.m_bIsVirtualKeyboardOpen.m_callbacks.Register(OnCallback)
 	}
 

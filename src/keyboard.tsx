@@ -1,35 +1,51 @@
 import { beforePatch } from "decky-frontend-lib";
 import { FaMicrophone, FaArrowUp } from "react-icons/fa";
 import { log } from "./logger";
-import { PluginSettings } from './types/settings';
-import * as dictation from './keys/dictation';
-import * as orientation from './keys/orientation';
-import { KeyDefinition, KeyMapping } from './types/key-mappings';
+import { PluginSettings } from './types/plugin-settings';
+import { DictationKey } from './custom-keys/dictation-key';
+import { OrientationKey } from './custom-keys/orientation-key';
+import { CustomKeyPrefix, KeyMapping } from './types/key-mappings';
+import { OSK_Key, OSK_KeyLayout } from "./types/osk-key";
 import { ServerAPI } from "decky-frontend-lib";
 import * as style from './style';
+import * as KeyboardUtils from './utils/keyboard-utils';
+import { CustomKey } from "./custom-keys/custom-key";
 
 var server: ServerAPI | undefined = undefined;
 var settings: PluginSettings | undefined = undefined;
 var KeyboardRoot: any;
 
+
+const CustomKey_Alt: CustomKey = new CustomKey('Alt', true);
+const CustomKey_Control: CustomKey = new CustomKey('Control', true);
+const CustomKey_Escape: CustomKey = new CustomKey('Escape', true);
+
+const CustomKey_Dictation: DictationKey = new DictationKey();
+const CustomKey_Orientation: OrientationKey = new OrientationKey();
+
 const KeyMappings: Map<string, KeyMapping> = new Map<string, KeyMapping>([
-    [dictation.KeyCode,       { row: 4,  offset: 1,  definition: { key: "SwitchKeys_Dicate", label: <FaMicrophone />, type: 4 }}],
-    ["alt_key",               { row: 4,  offset: 0,  definition: { key: "SwitchKeys_Alt", label: "#Key_Alt", type: 5 }}],
-    ["ctrl_key",              { row: 4,  offset: 0,  definition: { key: "SwitchKeys_Control", label: "#Key_Control", type: 5 }}],
-    ["esc_key",               { row: 0,  offset: 0,  definition: { key: "SwitchKeys_Escape", label: "#Key_Escape", type: 4 }}],
-    [orientation.KeyCode,     { row: 4,  offset: -1, definition: { key: "SwitchKeys_Orientation", label: <FaArrowUp />, type: 4 }}],
-  //["function_f1_key",       { row: 0,  offset: 0,  definition: { key: "", label: "#KeyboardKey_F1",  type: 5}}],
+    [CustomKey_Dictation.keyCode,   new KeyMapping(4,   0, { isCustom: true, key: CustomKey_Dictation.keyCode, label: <FaMicrophone />, type: 4 }, 'SwitchKeys_Layout')],
+    [CustomKey_Control.keyCode,     new KeyMapping(4,   0, { isCustom: true, key: CustomKey_Control.keyCode, label: "#Key_Control", type: 3 }, 'SwitchKeys_Emoji')],
+    [CustomKey_Alt.keyCode,         new KeyMapping(4,   0, { isCustom: true, key: CustomKey_Alt.keyCode, label: "#Key_Alt", type: 3 }, 'SwitchKeys_Layout')],
+    [CustomKey_Escape.keyCode,      new KeyMapping(0,   0, { isCustom: true, key: CustomKey_Escape.keyCode, label: "#Key_Escape", type: 3 })],
+    [CustomKey_Orientation.keyCode, new KeyMapping(4,  -1, { isCustom: true, key: CustomKey_Orientation.keyCode, label: <FaArrowUp />, type: 4 }, 'VKClose')],
 ]);
 
-export function setServer(s: ServerAPI) {
-  server = s;
+
+export function setServer(s: ServerAPI)
+{
+    server = s;
+    CustomKey_Dictation.setServer(s);
+    CustomKey_Orientation.setServer(s);
 }
 
-export function setSettings(s: PluginSettings) {
+export function setSettings(s: PluginSettings)
+{
     settings = s;
 }
 
-export function Init(instance: any) {
+export function Init(instance: any)
+{
     KeyboardRoot = instance.return;
     UpdateLayout();
     setTimeout(style.Init, 10);
@@ -42,29 +58,47 @@ export function Init(instance: any) {
     return;
 }
 
-function UpdateLayout() {
-    //log("keys", KeyboardRoot)
-    //log("keys", KeyboardRoot.stateNode.state.standardLayout.rgLayout);
 
-    KeyMappings.forEach(function (value) {
-        RemoveKey(value)
-    }); 
+function PrepareLayout()
+{
+    //log("layout", KeyboardRoot.stateNode.state.standardLayout);
 
-    if (settings?.DictationEnabled) AddKey(KeyMappings.get(dictation.KeyCode));
+    var x = 0, y = 0;
 
-    if (settings?.EnableAltKey) AddKey(KeyMappings.get("alt_key"));
-    if (settings?.EnableCtrlKey) AddKey(KeyMappings.get("ctrl_key"));
-    if (settings?.EnableEscKey) AddKey(KeyMappings.get("esc_key"));
-
-    if (settings?.EnableOrientationSwapKey) {
-        AddKey(KeyMappings.get(orientation.KeyCode));
-        orientation.Init();
-    } 
-    //if (settings?.EnableFunctionKeys) AddKey(KeyMappings.get("function_f1_key"));
+    while (y < KeyboardRoot.stateNode.state.standardLayout.rgLayout.length) 
+    {
+        while (x < KeyboardRoot.stateNode.state.standardLayout.rgLayout[y].length)
+        {
+            if (KeyboardUtils.isCustomKey(KeyboardRoot.stateNode.state.standardLayout.rgLayout[y][x]))
+                KeyboardRoot.stateNode.state.standardLayout.rgLayout[y].splice(x, 1);
+            else
+                ++x;
+        }
+        x = 0;
+        ++y;
+    }
 
 }
 
-function OnType(e: any[]) {
+function UpdateLayout()
+{
+    PrepareLayout();
+
+    if (settings?.DictationEnabled) AddKey(KeyMappings.get(CustomKey_Dictation.keyCode));
+
+    if (settings?.EnableAltKey) AddKey(KeyMappings.get(CustomKey_Alt.keyCode));
+    if (settings?.EnableCtrlKey) AddKey(KeyMappings.get(CustomKey_Control.keyCode));
+    if (settings?.EnableEscKey) AddKey(KeyMappings.get(CustomKey_Escape.keyCode));
+
+    if (settings?.EnableOrientationSwapKey)
+    {
+        AddKey(KeyMappings.get(CustomKey_Orientation.keyCode));
+        CustomKey_Orientation.Init();
+    }
+}
+
+function OnType(e: any[])
+{
     const key = e[0];
     log("key", key);
 
@@ -74,46 +108,64 @@ function OnType(e: any[]) {
     //        .then((data) => console.log(data));
     //}
 
+    if (key.strKey == CustomKey_Control)
+        e[0] == 'Control';
+
     if (key.strKey == "SwitchKeys_Layout")
         setTimeout(UpdateLayout, 10);
 
-    if (key.strKey == KeyMappings.get(orientation.KeyCode)?.definition.key) 
-        orientation.OnOrientationKey();
+    if (key.strKey == CustomKey_Orientation.keyCode)
+        CustomKey_Orientation.OnAction();
 
-    if (settings?.DictationEnabled && key.strKey == KeyMappings.get(dictation.KeyCode)?.definition.key) 
-        dictation.ToggleDictation();
+    if (settings?.DictationEnabled && key.strKey == CustomKey_Dictation.keyCode)
+        CustomKey_Dictation.OnAction()
 }
 
-function AddKey(value: KeyMapping | undefined) {
-    if (value) {
+function AddKey(value: KeyMapping | undefined)
+{
+    if (value)
+    {
         let index = value.offset;
-        KeyboardRoot.stateNode.state.standardLayout.rgLayout[value?.row].splice(index, 0 ,value?.definition);
+        if (value.target != null) {
+            let targetIndex = KeyboardUtils.IndexOf(KeyboardRoot, value.row, value.target);
+            if (targetIndex) index = targetIndex + value.offset;
+        }
+        
+        KeyboardRoot.stateNode.state.standardLayout.rgLayout[value?.row].splice(index, 0, value?.definition);
     }
 }
 
-function RemoveKey(value: KeyMapping) {
-    var i = 0;
-    var rN = value.row;
-    while (i < KeyboardRoot.stateNode.state.standardLayout.rgLayout[rN].length) {
-      if (KeyboardRoot.stateNode.state.standardLayout.rgLayout[rN][i].key === value.definition.key) {
-        KeyboardRoot.stateNode.state.standardLayout.rgLayout[rN].splice(i, 1);
-      } else {
-        ++i;
-      }
+function RemoveKey(value: KeyMapping)
+{
+    var x = 0, y = 0;
+    while (y < KeyboardRoot.stateNode.state.standardLayout.rgLayout.length) 
+    {
+        while (x < KeyboardRoot.stateNode.state.standardLayout.rgLayout[y].length)
+        {
+            if (KeyboardRoot.stateNode.state.standardLayout.rgLayout[y][x] === value.definition)
+                KeyboardRoot.stateNode.state.standardLayout.rgLayout[y].splice(x, 1);
+            else
+                ++x;
+        }
+        x = 0;
+        ++y;
     }
 }
 
-function ChangeKeyLabel(value: KeyMapping, label: any) {
+function ChangeKeyLabel(value: KeyMapping, label: any)
+{
     var rN = value.row;
     for (let i = 0; i < KeyboardRoot.stateNode.state.standardLayout.rgLayout[rN].length; i++) 
     {
-      if (KeyboardRoot.stateNode.state.standardLayout.rgLayout[rN][i].key === value.definition.key)  {
-          KeyboardRoot.stateNode.state.standardLayout.rgLayout[rN][i].label = label; 
-      }
+        if (KeyboardRoot.stateNode.state.standardLayout.rgLayout[rN][i].custom_id === value.definition)
+        {
+            KeyboardRoot.stateNode.state.standardLayout.rgLayout[rN][i].label = label;
+        }
     }
 }
 
-export function ChangeKeyLabelById(value: string, label: any) {
+export function ChangeKeyLabelById(value: string, label: any)
+{
     let result = KeyMappings.get(value);
     if (result) ChangeKeyLabel(result, label);
 }

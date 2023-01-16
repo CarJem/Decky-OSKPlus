@@ -1,0 +1,44 @@
+import { FaMicrophone } from "react-icons/fa";
+import { log } from "../logger";
+import * as icons from '../types/icons';
+import { ChangeKeyLabelById } from "../keyboard";
+import { CustomKey } from "./custom-key";
+
+export class DictationKey extends CustomKey {
+
+    dictateListening: boolean = false;
+
+    constructor() {
+        super('Dicate');
+    }
+
+    public override OnAction(): void
+    {
+        if (!this.dictateListening)
+        {
+            this.dictateListening = true;
+            var response = this.server?.callPluginMethod<any, boolean>("startDictation", {});
+            log("startDictation", response)
+    
+            // serverApi.fetchNoCors('http://localhost:9000/hooks/start-dictate')
+            //   .then((data) => console.log(data));
+            ChangeKeyLabelById(this.keyCode, <icons.ActiveIcon/>)
+            this.server?.toaster.toast({
+                title: "Listening...",
+                body: "Dictation started!"
+            });
+        } else
+        {
+            this.dictateListening = false;
+            var response = this.server?.callPluginMethod<any, boolean>("endDictation", {});
+            log("endDictate", response)
+            // serverApi.fetchNoCors('http://localhost:9000/hooks/end-dictate')
+            //   .then((data) => console.log(data));
+            ChangeKeyLabelById(this.keyCode, <FaMicrophone/>)
+            this.server?.toaster.toast({
+                title: "Finished Listening.",
+                body: "Dictation finished!"
+            });
+        }
+    }
+}
