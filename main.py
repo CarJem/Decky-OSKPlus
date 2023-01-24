@@ -19,7 +19,13 @@ class Plugin:
     #region Dictation
     async def startDictation(self):
         pulse_device_name = "alsa_input.pci-0000_04_00.5-platform-acp5x_mach.0.HiFi__hw_acp5x_0__source"
-        cmd = [os.path.join(os.path.dirname(__file__), "out/nd/nerd-dictation"), "begin", "--vosk-model-dir=" + os.path.dirname(__file__) + "/out/model", "--simulate-input-tool=YDOTOOL", "--pulse-device-name=" + pulse_device_name]
+        cmd = [
+            os.path.join(os.path.dirname(__file__), "out/nd/nerd-dictation"), 
+            "begin", 
+            "--vosk-model-dir=" + os.path.dirname(__file__) + "/out/model", 
+            "--simulate-input-tool=YDOTOOL", 
+            "--pulse-device-name=" + pulse_device_name
+            ]
 
         logger.info("Starting nerd-dictation")
         env = os.environ.copy()
