@@ -24,7 +24,7 @@ const CustomKey_Dictation: DictationKey = new DictationKey();
 const CustomKey_Orientation: OrientationKey = new OrientationKey();
 
 const KeyMappings: Map<string, KeyMapping> = new Map<string, KeyMapping>([
-    [CustomKey_Dictation.keyCode,   new KeyMapping(4,   0, { isCustom: true, key: CustomKey_Dictation.keyCode, label: <FaMicrophone />, type: 4 }, ' ')],
+    [CustomKey_Dictation.keyCode,   new KeyMapping(4,   0, { isCustom: true, key: CustomKey_Dictation.keyCode, label: <FaMicrophone />, type: 4 }, 'SwitchKeys_Layout')],
     [CustomKey_Control.keyCode,     new KeyMapping(4,   0, { isCustom: true, key: CustomKey_Control.keyCode, label: "#Key_Control", type: 3 }, 'SwitchKeys_Emoji')],
     [CustomKey_Alt.keyCode,         new KeyMapping(4,   0, { isCustom: true, key: CustomKey_Alt.keyCode, label: "#Key_Alt", type: 3 }, 'SwitchKeys_Layout')],
     [CustomKey_Escape.keyCode,      new KeyMapping(0,   0, { isCustom: true, key: CustomKey_Escape.keyCode, label: "#Key_Escape", type: 3 })],
@@ -139,14 +139,14 @@ function AddKey(value: KeyMapping | undefined)
     }
 }
 
-function RemoveKey(value: KeyMapping)
+function RemoveKey(definition: OSK_Key)
 {
     var x = 0, y = 0;
     while (y < KeyboardRoot.stateNode.state.standardLayout.rgLayout.length) 
     {
         while (x < KeyboardRoot.stateNode.state.standardLayout.rgLayout[y].length)
         {
-            if (KeyboardRoot.stateNode.state.standardLayout.rgLayout[y][x] === value.definition)
+            if (KeyboardRoot.stateNode.state.standardLayout.rgLayout[y][x].key === definition.key)
                 KeyboardRoot.stateNode.state.standardLayout.rgLayout[y].splice(x, 1);
             else
                 ++x;
@@ -156,12 +156,11 @@ function RemoveKey(value: KeyMapping)
     }
 }
 
-function ChangeKeyLabel(value: KeyMapping, label: any)
+function ChangeKeyLabel(definition: OSK_Key, rN: number, label: any)
 {
-    var rN = value.row;
     for (let i = 0; i < KeyboardRoot.stateNode.state.standardLayout.rgLayout[rN].length; i++) 
-    {
-        if (KeyboardRoot.stateNode.state.standardLayout.rgLayout[rN][i].custom_id === value.definition)
+    {       
+        if (KeyboardRoot.stateNode.state.standardLayout.rgLayout[rN][i].key === definition.key)
         {
             KeyboardRoot.stateNode.state.standardLayout.rgLayout[rN][i].label = label;
         }
@@ -171,6 +170,10 @@ function ChangeKeyLabel(value: KeyMapping, label: any)
 export function ChangeKeyLabelById(value: string, label: any)
 {
     let result = KeyMappings.get(value);
-    if (result) ChangeKeyLabel(result, label);
+    if (result) {
+        let key = (result.definition as OSK_Key);
+        if ((key != undefined) && (key.isCustom ?? false)) 
+            ChangeKeyLabel(key, result.row, label);
+    } 
 }
 
