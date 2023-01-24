@@ -2,9 +2,9 @@ import { FaMicrophone } from "react-icons/fa";
 import { log } from "../logger";
 import * as icons from '../types/icons';
 import { ChangeKeyLabelById } from "../keyboard";
-import { CustomKey } from "./custom-key";
+import { CustomKeyBehavior } from "./custom-key-behavior";
 
-export class DictationKey extends CustomKey {
+export class DictationKey extends CustomKeyBehavior {
 
     dictateListening: boolean = false;
 

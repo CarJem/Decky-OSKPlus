@@ -1,7 +1,8 @@
 import { ServerAPI } from "decky-frontend-lib";
+import { CustomKeyPrefix } from "../types/key-mappings";
 
 
-export class CustomKey
+export class CustomKeyBehavior
 {
 
     server: ServerAPI | undefined = undefined;
@@ -9,7 +10,7 @@ export class CustomKey
 
     constructor(keyCode: string, excludePrefix: boolean = false)
     {
-       if (!excludePrefix) this.keyCode = "SwitchKeys_Deckyboard_" + keyCode;
+       if (!excludePrefix) this.keyCode = CustomKeyPrefix + keyCode;
        else this.keyCode = keyCode;
     }
     public OnAction() { }

@@ -2,9 +2,9 @@ import { findSP } from "decky-frontend-lib";
 import { FaArrowUp, FaArrowDown } from "react-icons/fa";
 import { ChangeKeyLabelById } from "../keyboard";
 import { virtualKeyboardContainerClasses } from '../types/personal-static-classes'
-import { CustomKey } from "./custom-key";
+import { CustomKeyBehavior } from "./custom-key-behavior";
 
-export class OrientationKey extends CustomKey {
+export class OrientationKey extends CustomKeyBehavior {
 
     orientation: boolean = false;
 

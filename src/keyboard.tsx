@@ -2,23 +2,21 @@ import { beforePatch } from "decky-frontend-lib";
 import { FaMicrophone, FaArrowUp } from "react-icons/fa";
 import { log } from "./logger";
 import { PluginSettings } from './types/plugin-settings';
-import { DictationKey } from './custom-keys/dictation-key';
-import { OrientationKey } from './custom-keys/orientation-key';
-import { CustomKeyPrefix, KeyMapping } from './types/key-mappings';
-import { OSK_Key, OSK_KeyLayout } from "./types/osk-key";
+import { DictationKey } from './behaviors/dictation-key';
+import { OrientationKey } from './behaviors/orientation-key';
+import { KeyMapping } from './types/key-mappings';
 import { ServerAPI } from "decky-frontend-lib";
 import * as style from './style';
-import * as KeyboardUtils from './utils/keyboard-utils';
-import { CustomKey } from "./custom-keys/custom-key";
+import { CustomKeyBehavior } from "./behaviors/custom-key-behavior";
 
 var server: ServerAPI | undefined = undefined;
 var settings: PluginSettings | undefined = undefined;
 var KeyboardRoot: any;
 
 
-const CustomKey_Alt: CustomKey = new CustomKey('Alt', true);
-const CustomKey_Control: CustomKey = new CustomKey('Control', true);
-const CustomKey_Escape: CustomKey = new CustomKey('Escape', true);
+const CustomKey_Alt: CustomKeyBehavior = new CustomKeyBehavior('Alt', true);
+const CustomKey_Control: CustomKeyBehavior = new CustomKeyBehavior('Control', true);
+const CustomKey_Escape: CustomKeyBehavior = new CustomKeyBehavior('Escape', true);
 
 const CustomKey_Dictation: DictationKey = new DictationKey();
 const CustomKey_Orientation: OrientationKey = new OrientationKey();
@@ -73,7 +71,7 @@ function PrepareLayout()
     {
         while (x < KeyboardRoot.stateNode.state.standardLayout.rgLayout[y].length)
         {
-            if (KeyboardUtils.isCustomKey(KeyboardRoot.stateNode.state.standardLayout.rgLayout[y][x]))
+            if (KeyMapping.IsCustomKey(KeyboardRoot.stateNode.state.standardLayout.rgLayout[y][x]))
                 KeyboardRoot.stateNode.state.standardLayout.rgLayout[y].splice(x, 1);
             else
                 ++x;
@@ -129,38 +127,17 @@ function AddKey(value: KeyMapping | undefined)
 {
     if (value)
     {
-        let index = value.offset;
-        if (value.target != null) {
-            let targetIndex = KeyboardUtils.IndexOf(KeyboardRoot, value.row, value.target);
-            if (targetIndex) index = targetIndex + value.offset;
-        }
-        
+        let index = value.GetDestinationX(KeyboardRoot);
         KeyboardRoot.stateNode.state.standardLayout.rgLayout[value?.row].splice(index, 0, value?.definition);
     }
 }
 
-function RemoveKey(definition: OSK_Key)
+function ChangeKeyLabel(definition: KeyMapping, label: any)
 {
-    var x = 0, y = 0;
-    while (y < KeyboardRoot.stateNode.state.standardLayout.rgLayout.length) 
-    {
-        while (x < KeyboardRoot.stateNode.state.standardLayout.rgLayout[y].length)
-        {
-            if (KeyboardRoot.stateNode.state.standardLayout.rgLayout[y][x].key === definition.key)
-                KeyboardRoot.stateNode.state.standardLayout.rgLayout[y].splice(x, 1);
-            else
-                ++x;
-        }
-        x = 0;
-        ++y;
-    }
-}
-
-function ChangeKeyLabel(definition: OSK_Key, rN: number, label: any)
-{
+    let rN = definition.row;
     for (let i = 0; i < KeyboardRoot.stateNode.state.standardLayout.rgLayout[rN].length; i++) 
     {       
-        if (KeyboardRoot.stateNode.state.standardLayout.rgLayout[rN][i].key === definition.key)
+        if (definition.Equals(KeyboardRoot.stateNode.state.standardLayout.rgLayout[rN][i]))
         {
             KeyboardRoot.stateNode.state.standardLayout.rgLayout[rN][i].label = label;
         }
@@ -170,10 +147,6 @@ function ChangeKeyLabel(definition: OSK_Key, rN: number, label: any)
 export function ChangeKeyLabelById(value: string, label: any)
 {
     let result = KeyMappings.get(value);
-    if (result) {
-        let key = (result.definition as OSK_Key);
-        if ((key != undefined) && (key.isCustom ?? false)) 
-            ChangeKeyLabel(key, result.row, label);
-    } 
+    if (result) ChangeKeyLabel(result, label);
 }
 
