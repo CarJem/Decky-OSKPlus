@@ -100,6 +100,17 @@
                 "deployall"
             ],
             "problemMatcher": []
+        },
+        {
+            "label": "allinonequick",
+            "detail": "Build and deploy (without PNPM)",
+            "dependsOrder": "sequence",
+            "group": "test",
+            "dependsOn": [
+                "build",
+                "deployall"
+            ],
+            "problemMatcher": []
         }
     ]
 }

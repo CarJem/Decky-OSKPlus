@@ -27,7 +27,7 @@ const Content: VFC<{ serverAPI: ServerAPI }> = ({ }) =>
 };
 
 const Settings: PluginSettings = {
-	DictationEnabled: false,
+	DictationEnabled: true,
 	EnableFunctionKeys: false,
 	EnableCtrlKey: false,
 	EnableAltKey: false,
