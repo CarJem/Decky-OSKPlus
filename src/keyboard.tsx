@@ -46,6 +46,12 @@ function UpdateLayout() {
     //log("keys", KeyboardRoot)
     //log("keys", KeyboardRoot.stateNode.state.standardLayout.rgLayout);
 
+    
+    //log("beforeLayoutClone", KeyboardRoot.stateNode.state.standardLayout);
+    //KeyboardRoot.stateNode.state.standardLayout = JSON.parse(JSON.stringify(KeyboardRoot.stateNode.state.standardLayout));
+    //log("afterLayoutClone", KeyboardRoot.stateNode.state.standardLayout);
+
+
     KeyMappings.forEach(function (value) {
         RemoveKey(value)
     }); 
