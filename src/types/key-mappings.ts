@@ -1,10 +1,12 @@
 export const CustomKeyPrefix = "SwitchKeys_Deckyboard_";
 
 export type SupportedKeyTypes =
-  | string
+  | BasicKeyDefinition
   | KeyDefinition
   | null
-  | Array<KeyDefinition | string | null>;
+  | Array<KeyDefinition | BasicKeyDefinition | null>;
+
+export type BasicKeyDefinition = string;
 
 export type KeyDefinition =
 {
@@ -75,8 +77,8 @@ export class KeyMapping
         if (castedValue) {
             if ((castedValue as KeyDefinition).key !== undefined)
                 return (castedValue as KeyDefinition).key;
-            if ((castedValue as string).valueOf() !== undefined)
-                return (castedValue as string).valueOf();
+            if ((castedValue as BasicKeyDefinition).valueOf() !== undefined)
+                return (castedValue as BasicKeyDefinition).valueOf();
         }
         return undefined;
     }
