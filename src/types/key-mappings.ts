@@ -49,8 +49,7 @@ export class KeyMapping
     {
         let index = this.offset;
         if (this.target != null) {
-            let targetIndex = KeyMapping.IndexOf(KeyboardRoot, this.row, this.target);
-            if (targetIndex) index = targetIndex + this.offset;
+            let targetIndex = KeyMapping.IndexOf(KeyboardRoot, this.row, this.target, this.offset);
         }
         return index;
     }
@@ -69,13 +68,20 @@ export class KeyMapping
         return false;
     }
   
-    public static IndexOf(KeyboardRoot: any, row: number, key: SupportedKeyTypes) : number | undefined
+    public static IndexOf(KeyboardRoot: any, row: number, key: SupportedKeyTypes, offset?: number) : number | undefined
     {
         var x = 0;
-        while (x < KeyboardRoot.stateNode.state.standardLayout.rgLayout[row].length)
+        var length = KeyboardRoot.stateNode.state.standardLayout.rgLayout[row].length;
+        while (x < length)
         {
-            if (KeyboardRoot.stateNode.state.standardLayout.rgLayout[row][x] === key)
-              return x;
+            if (KeyboardRoot.stateNode.state.standardLayout.rgLayout[row][x] === key) {
+                if (offset != undefined) {
+                    var finalValue = x + offset;
+                    if (finalValue + 1 >= length) return length;
+                    else if (finalValue + 1 <= 0) return 0;
+                    else return finalValue;
+                }
+            }
             else
                 ++x;
         }

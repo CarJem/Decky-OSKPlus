@@ -8,6 +8,7 @@ import { KeyMapping } from './types/key-mappings';
 import { ServerAPI } from "decky-frontend-lib";
 import * as style from './style';
 import { CustomKeyBehavior } from "./behaviors/custom-key-behavior";
+import { cloneDeep } from "lodash";
 
 var server: ServerAPI | undefined = undefined;
 var settings: PluginSettings | undefined = undefined;
@@ -22,7 +23,7 @@ const CustomKey_Dictation: DictationKey = new DictationKey();
 const CustomKey_Orientation: OrientationKey = new OrientationKey();
 
 const KeyMappings: Map<string, KeyMapping> = new Map<string, KeyMapping>([
-    [CustomKey_Dictation.keyCode,   new KeyMapping(4,   0, { isCustom: true, key: CustomKey_Dictation.keyCode, label: <FaMicrophone />, type: 4 }, 'SwitchKeys_Layout')],
+    [CustomKey_Dictation.keyCode,   new KeyMapping(4,   2, { isCustom: true, key: CustomKey_Dictation.keyCode, label: <FaMicrophone />, type: 4 }, 'SwitchKeys_Layout')],
     [CustomKey_Control.keyCode,     new KeyMapping(4,   0, { isCustom: true, key: CustomKey_Control.keyCode, label: "#Key_Control", type: 3 }, 'SwitchKeys_Emoji')],
     [CustomKey_Alt.keyCode,         new KeyMapping(4,   0, { isCustom: true, key: CustomKey_Alt.keyCode, label: "#Key_Alt", type: 3 }, 'SwitchKeys_Layout')],
     [CustomKey_Escape.keyCode,      new KeyMapping(0,   0, { isCustom: true, key: CustomKey_Escape.keyCode, label: "#Key_Escape", type: 3 })],
@@ -65,20 +66,24 @@ function PrepareLayout()
     //KeyboardRoot.stateNode.state.standardLayout = JSON.parse(JSON.stringify(KeyboardRoot.stateNode.state.standardLayout));
     //log("afterLayoutClone", KeyboardRoot.stateNode.state.standardLayout);
 
-    var x = 0, y = 0;
+    log("beforeLayoutClone", KeyboardRoot.stateNode.state.standardLayout);
+    KeyboardRoot.stateNode.state.standardLayout = cloneDeep(KeyboardRoot.stateNode.state.standardLayout);
+    log("afterLayoutClone", KeyboardRoot.stateNode.state.standardLayout);
 
-    while (y < KeyboardRoot.stateNode.state.standardLayout.rgLayout.length) 
-    {
-        while (x < KeyboardRoot.stateNode.state.standardLayout.rgLayout[y].length)
-        {
-            if (KeyMapping.IsCustomKey(KeyboardRoot.stateNode.state.standardLayout.rgLayout[y][x]))
-                KeyboardRoot.stateNode.state.standardLayout.rgLayout[y].splice(x, 1);
-            else
-                ++x;
-        }
-        x = 0;
-        ++y;
-    }
+    //var x = 0, y = 0;
+    //
+    //while (y < KeyboardRoot.stateNode.state.standardLayout.rgLayout.length) 
+    //{
+    //    while (x < KeyboardRoot.stateNode.state.standardLayout.rgLayout[y].length)
+    //    {
+    //        if (KeyMapping.IsCustomKey(KeyboardRoot.stateNode.state.standardLayout.rgLayout[y][x]))
+    //            KeyboardRoot.stateNode.state.standardLayout.rgLayout[y].splice(x, 1);
+    //        else
+    //            ++x;
+    //    }
+    //    x = 0;
+    //    ++y;
+    //}
 
 }
 
