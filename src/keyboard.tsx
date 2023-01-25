@@ -23,7 +23,7 @@ const CustomKey_Dictation: DictationKey = new DictationKey();
 const CustomKey_Orientation: OrientationKey = new OrientationKey();
 
 const KeyMappings: Map<string, KeyMapping> = new Map<string, KeyMapping>([
-    [CustomKey_Dictation.keyCode,   new KeyMapping(4,   2, { isCustom: true, key: CustomKey_Dictation.keyCode, label: <FaMicrophone />, type: 4 }, 'SwitchKeys_Layout')],
+    [CustomKey_Dictation.keyCode,   new KeyMapping(4,   1, { isCustom: true, key: CustomKey_Dictation.keyCode, label: <FaMicrophone />, type: 4 }, 'SwitchKeys_Layout')],
     [CustomKey_Control.keyCode,     new KeyMapping(4,   0, { isCustom: true, key: CustomKey_Control.keyCode, label: "#Key_Control", type: 3 }, 'SwitchKeys_Emoji')],
     [CustomKey_Alt.keyCode,         new KeyMapping(4,   0, { isCustom: true, key: CustomKey_Alt.keyCode, label: "#Key_Alt", type: 3 }, 'SwitchKeys_Layout')],
     [CustomKey_Escape.keyCode,      new KeyMapping(0,   0, { isCustom: true, key: CustomKey_Escape.keyCode, label: "#Key_Escape", type: 3 })],
@@ -132,7 +132,7 @@ function AddKey(value: KeyMapping | undefined)
 {
     if (value)
     {
-        let index = value.GetDestinationX(KeyboardRoot);
+        let index = value.getDestinationX(KeyboardRoot);
         KeyboardRoot.stateNode.state.standardLayout.rgLayout[value?.row].splice(index, 0, value?.definition);
     }
 }
@@ -142,7 +142,7 @@ function ChangeKeyLabel(definition: KeyMapping, label: any)
     let rN = definition.row;
     for (let i = 0; i < KeyboardRoot.stateNode.state.standardLayout.rgLayout[rN].length; i++) 
     {       
-        if (definition.Equals(KeyboardRoot.stateNode.state.standardLayout.rgLayout[rN][i]))
+        if (definition.isSameKeycode(KeyboardRoot.stateNode.state.standardLayout.rgLayout[rN][i]))
         {
             KeyboardRoot.stateNode.state.standardLayout.rgLayout[rN][i].label = label;
         }

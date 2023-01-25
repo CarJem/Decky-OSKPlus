@@ -29,32 +29,26 @@ export class KeyMapping
         this.definition = definition;
     }
 
-    public KeycodeEquals(otherValue: any) : boolean 
+    public isSameKeycode(otherValue: any) : boolean 
     {
-        if ((otherValue as KeyDefinition).key !== undefined && (this.definition as KeyDefinition).key === undefined) {
-            var keyCodeA = (otherValue as KeyDefinition).key;
-            var keyCodeB = (this.definition as KeyDefinition).key;
-            return keyCodeA == keyCodeB;
+        var keyA = KeyMapping.tryGetKeycode(otherValue);
+        var keyB = KeyMapping.tryGetKeycode(this.definition);
+        if (keyA !== undefined && keyB !== undefined) {
+            return keyA === keyB;
         }
-
         return false; 
     }
-
-    public Equals(otherValue: any) : boolean 
-    {
-        return otherValue == this.definition;
-    }
-
-    public GetDestinationX(KeyboardRoot: any) : number
+    public getDestinationX(KeyboardRoot: any) : number
     {
         let index = this.offset;
         if (this.target != null) {
-            let targetIndex = KeyMapping.IndexOf(KeyboardRoot, this.row, this.target, this.offset);
+            let targetIndex = KeyMapping.getIndex(KeyboardRoot, this.row, this.target, this.offset);
+            if (targetIndex) index = targetIndex;
         }
         return index;
     }
   
-    public static IsCustomKey(value: any) : boolean
+    public static isCustomKey(value: any) : boolean
     {
         if (value === undefined)
             return false;
@@ -67,20 +61,44 @@ export class KeyMapping
         }
         return false;
     }
-  
-    public static IndexOf(KeyboardRoot: any, row: number, key: SupportedKeyTypes, offset?: number) : number | undefined
+    public static doKeycodesMatch(a: any, b: any) : boolean {
+        var keyA = KeyMapping.tryGetKeycode(a);
+        var keyB = KeyMapping.tryGetKeycode(b);
+        if (keyA !== undefined && keyB !== undefined) {
+            return keyA === keyB;
+        }
+        return false; 
+    }
+
+    public static tryGetKeycode(value: any) : String | undefined {
+        var castedValue = this.tryCastDefinition(value);
+        if (castedValue) {
+            if ((castedValue as KeyDefinition).key !== undefined)
+                return (castedValue as KeyDefinition).key;
+            if ((castedValue as string).valueOf() !== undefined)
+                return (castedValue as string).valueOf();
+        }
+        return undefined;
+    }
+    public static tryCastDefinition(value: any) : SupportedKeyTypes | undefined {
+        return (value as SupportedKeyTypes);
+    }
+
+    public static getIndex(KeyboardRoot: any, row: number, key: SupportedKeyTypes, offset?: number) : number | undefined
     {
         var x = 0;
         var length = KeyboardRoot.stateNode.state.standardLayout.rgLayout[row].length;
         while (x < length)
-        {
-            if (KeyboardRoot.stateNode.state.standardLayout.rgLayout[row][x] === key) {
+        {           
+            let currKey = KeyboardRoot.stateNode.state.standardLayout.rgLayout[row][x];
+            if (this.doKeycodesMatch(currKey, key)) {
                 if (offset != undefined) {
                     var finalValue = x + offset;
                     if (finalValue + 1 >= length) return length;
                     else if (finalValue + 1 <= 0) return 0;
                     else return finalValue;
                 }
+                else return x;
             }
             else
                 ++x;
