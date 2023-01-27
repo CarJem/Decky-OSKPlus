@@ -1,5 +1,6 @@
 import { ServerAPI } from "decky-frontend-lib";
-import { CustomKeyPrefix } from "../types/key-mappings";
+
+export const CustomKeyPrefix = "SwitchKeys_Deckyboard_";
 
 
 export class CustomKeyBehavior

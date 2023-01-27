@@ -1,7 +1,7 @@
 import { FaMicrophone } from "react-icons/fa";
 import { log } from "../logger";
 import * as icons from '../types/icons';
-import { ChangeKeyLabelById } from "../keyboard";
+import { KeyMapping } from "../types/key-mappings";
 import { CustomKeyBehavior } from "./custom-key-behavior";
 
 export class DictationKey extends CustomKeyBehavior {
@@ -22,11 +22,11 @@ export class DictationKey extends CustomKeyBehavior {
     
             // serverApi.fetchNoCors('http://localhost:9000/hooks/start-dictate')
             //   .then((data) => console.log(data));
-            ChangeKeyLabelById(this.keyCode, <icons.ActiveIcon/>)
-            this.server?.toaster.toast({
-                title: "Listening...",
-                body: "Dictation started!"
-            });
+            KeyMapping.changeLabelByKeyCode(this.keyCode, <icons.ActiveIcon/>)
+            //this.server?.toaster.toast({
+            //    title: "Listening...",
+            //    body: "Dictation started!"
+            //});
         } else
         {
             this.dictateListening = false;
@@ -34,11 +34,11 @@ export class DictationKey extends CustomKeyBehavior {
             log("endDictate", response)
             // serverApi.fetchNoCors('http://localhost:9000/hooks/end-dictate')
             //   .then((data) => console.log(data));
-            ChangeKeyLabelById(this.keyCode, <FaMicrophone/>)
-            this.server?.toaster.toast({
-                title: "Finished Listening.",
-                body: "Dictation finished!"
-            });
+            KeyMapping.changeLabelByKeyCode(this.keyCode, <FaMicrophone/>)
+            //this.server?.toaster.toast({
+            //    title: "Finished Listening.",
+            //    body: "Dictation finished!"
+            //});
         }
     }
 }
