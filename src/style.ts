@@ -1,8 +1,5 @@
-import { beforePatch, ServerAPI, findSP, findModule } from "decky-frontend-lib";
+import { findSP } from "decky-frontend-lib";
 import {  } from "decky-frontend-lib";
-import React, { VFC } from "react";
-import { FaArrowUp, FaArrowDown } from "react-icons/fa";
-import { log } from "./logger";
 import { PluginSettings } from "./types/plugin-settings";
 import { virtualKeyboardClasses } from './types/personal-static-classes'
 

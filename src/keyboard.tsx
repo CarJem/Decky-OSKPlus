@@ -10,7 +10,6 @@ import * as style from './style';
 import { CustomKeyBehavior } from "./behaviors/custom-key-behavior";
 import { cloneDeep } from "lodash";
 
-var server: ServerAPI | undefined = undefined;
 var settings: PluginSettings | undefined = undefined;
 var KeyboardRoot: any;
 
@@ -33,7 +32,6 @@ const KeyMappings: Map<string, KeyMapping> = new Map<string, KeyMapping>([
 
 export function setServer(s: ServerAPI)
 {
-    server = s;
     CustomKey_Dictation.setServer(s);
     CustomKey_Orientation.setServer(s);
 }
