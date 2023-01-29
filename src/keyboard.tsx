@@ -89,7 +89,7 @@ function AfterTypeKeyInternal(e: any[])
         log("AfterTypeKeyInternal", e);
 
     if (key.strKey == "SwitchKeys_Layout")
-        setTimeout(UpdateLayout, 500);
+        setTimeout(UpdateLayout, 100);
 
     MoveKey.Save();
  
