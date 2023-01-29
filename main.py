@@ -6,6 +6,9 @@ import urllib.request
 import zipfile
 from settings import SettingsManager # type: ignore
 from helpers import get_user_id, get_home_path # type: ignore
+import ssl
+
+ssl._create_default_https_context = ssl._create_unverified_context
 
 os.setuid(get_user_id())
 
@@ -67,11 +70,15 @@ class Plugin:
         Popen([path.join(PLUGIN_BIN, "nerd-dictation"), "end",])
 
     #endregion
+    async def getModels(self):
+        return os.listdir(path.join(PLUGIN_PATH, "models"))
+
     async def downloadVoskModel(self, modelName):
         zipPath = f"/tmp/{modelName}.zip"
         urllib.request.urlretrieve(f"https://alphacephei.com/vosk/models/{modelName}.zip", zipPath)
         with zipfile.ZipFile(zipPath, 'r') as zip:
             modelPath = path.join(PLUGIN_PATH, "models", modelName)
+            os.chmod(path.join(PLUGIN_PATH, "models"), 764)
             mkdir(modelPath)
             zip.extractall(modelPath)
             os.remove(zipPath)

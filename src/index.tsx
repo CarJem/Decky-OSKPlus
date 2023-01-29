@@ -9,49 +9,54 @@ import
 	findInReactTree,
 	Dropdown,
 	DropdownOption,
+	Focusable,
 	ButtonItem,
-	Focusable
+	showModal
 } from "decky-frontend-lib";
 import { VFC } from "react";
-import { FaDownload, FaKeyboard } from "react-icons/fa";
+import { FaKeyboard } from "react-icons/fa";
 import { log } from "./logger";
 import * as python from './python';
 import * as keyboard from './keyboard';
 import { PluginSettings } from "./types/plugin-settings";
 import * as style from "./style";
 import { useState } from "react";
+import models from "./models";
 
-const options : DropdownOption[] = [
-	{ label: "English", data: "vosk-model-small-en-us-0.15" },
-	{ label: "Indian English", data: "vosk-model-small-en-in-0.4" },
-	{ label: "Chinese", data: "vosk-model-small-cn-0.22" },
-	{ label: "Russian", data: "vosk-model-small-ru-0.22" },
-	{ label: "French", data: "vosk-model-small-fr-0.22" },
-	{ label: "French (pguyot)", data: "vosk-model-small-fr-pguyot-0.3" },
-	{ label: "German", data: "vosk-model-small-de-0.15" },
-	{ label: "Spanish", data: "vosk-model-small-es-0.42" },
-	{ label: "Portuguese", data: "vosk-model-small-pt-0.3" },
-	{ label: "Turkish", data: "vosk-model-small-tr-0.3" },
-	{ label: "Vietnamese", data: "vosk-model-small-vn-0.3" },
-	{ label: "Italian", data: "vosk-model-small-it-0.22" },
-	{ label: "Dutch", data: "vosk-model-small-nl-0.22" },
-	{ label: "Catalan", data: "vosk-model-small-ca-0.4" },
-	{ label: "Farsi", data: "vosk-model-small-fa-0.5" },
-	{ label: "Ukrainian", data: "vosk-model-small-uk-v3-nano" },
-	{ label: "Kazakh", data: "vosk-model-small-kz-0.15" },
-	{ label: "Swedish", data: "vosk-model-small-sv-rhasspy-0.15" },
-	{ label: "Japanese", data: "vosk-model-small-ja-0.22" },
-	{ label: "Esperanto", data: "vosk-model-small-eo-0.42" },
-	{ label: "Hindi", data: "vosk-model-small-hi-0.22" },
-	{ label: "Czech", data: "vosk-model-small-cs-0.4-rhasspy" },
-	{ label: "Uzbek", data: "vosk-model-small-uz-0.22" },
-	{ label: "Korean", data: "vosk-model-small-ko-0.22" }
-	]
+import ModelManagerModal from "./modals/ModelManagerModal";
+import { useEffect } from "react";
+
+
 
 const Content: VFC<{ serverAPI: ServerAPI }> = ({ serverAPI}) =>
 {	
-	const [modelOption, setModelOption] = useState(serverAPI.callPluginMethod("settings_get", {key: "voskModel", default:"vosk-model-small-en-us-0.15"})
-	);
+	const [modelOptions, setModelOptions] = useState([] as DropdownOption[]);
+
+	const [selectedModel, setSelectedModel] = useState();
+
+useEffect(() => {
+
+	serverAPI.callPluginMethod("settings_get", {key: "voskModel", default:"vosk-model-small-en-us-0.15"}).then((x => {
+		console.log(x);
+	}))
+
+	serverAPI.callPluginMethod("getModels", {}).then((x) => {
+		var results = x.result as string[];
+		const opts: DropdownOption[] = []; 
+		results.forEach(x=> {
+			if (models[x]){
+				opts.push({label: models[x], data: x});
+			}else {
+				opts.push({label: x, data: x});
+			}
+		})
+		setModelOptions(opts);	
+	})
+
+
+},[])
+
+
 
 	return (
 		<PanelSection title="DeckyBoard">
@@ -65,17 +70,19 @@ const Content: VFC<{ serverAPI: ServerAPI }> = ({ serverAPI}) =>
               maxWidth: '100%',
             }}
           >
-				<Dropdown               menuLabel="Model"
- rgOptions={options} selectedOption={modelOption} onChange={(x) => {
-					setModelOption(x.data);
+				<Dropdown menuLabel="Model"
+ rgOptions={modelOptions} selectedOption={selectedModel} onChange={(x) => {
+				setSelectedModel(x.data);
 					serverAPI.callPluginMethod("settings_set", {key: "voskModel", value: x.data})
 				}}></Dropdown>
-				<ButtonItem>{FaDownload}</ButtonItem>
 				</div>
 				</Focusable>
 			</PanelSectionRow>
 			<PanelSectionRow>
-				{modelOption}
+				<ButtonItem onClick={() => {
+					showModal(<ModelManagerModal serverAPI={serverAPI}/>, window)
+				}}>Manage Models</ButtonItem>
+				{selectedModel}
 			</PanelSectionRow>
 		</PanelSection>
 	);
