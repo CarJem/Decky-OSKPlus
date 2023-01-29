@@ -1,5 +1,5 @@
 import { afterPatch, beforePatch, findInReactTree, findModuleChild, Patch } from "decky-frontend-lib";
-import { FaMicrophone } from "react-icons/fa";
+import { MdOutlineMic } from "react-icons/md";
 import { log } from "./logger";
 import { PluginSettings } from './types/plugin-settings';
 import { DictationKey } from './behaviors/dictation-key';
@@ -35,7 +35,7 @@ const KeyboardInstance = () => { return findInReactTree(
 )};
 
 const CustomKeyBehavior_Dictation: DictationKey = new DictationKey();
-const CustomKey_Dictation = new KeyMapping(1,   4, KeyDefinition.fromCustom({ key: CustomKeyBehavior_Dictation.keyCode, label: <FaMicrophone />, type: 4 }));
+const CustomKey_Dictation = new KeyMapping(1,   4, KeyDefinition.fromCustom({ key: CustomKeyBehavior_Dictation.keyCode, label: <MdOutlineMic />, type: 4 }));
 const DeckyCustom_OverrideLayoutName = "qwerty_int";
 
 

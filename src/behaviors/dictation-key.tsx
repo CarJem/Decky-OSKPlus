@@ -1,4 +1,4 @@
-import { BiMicrophone } from "react-icons/bi";
+import { MdOutlineMic } from "react-icons/md";
 import { runDetached } from "../extensions";
 import { log } from "../logger";
 import * as icons from '../types/icons';
@@ -19,7 +19,7 @@ export class DictationKey extends CustomKeyBehavior {
             var response = this.server?.callPluginMethod<any, boolean>("endDictation", {});
             log("endDictate", response);
         });
-        KeyMapping.changeLabelByKeyCode(this.keyCode, <BiMicrophone/>)
+        KeyMapping.changeLabelByKeyCode(this.keyCode, <MdOutlineMic/>)
         //this.server?.toaster.toast({
         //    title: "Finished Listening.",
         //    body: "Dictation finished!"

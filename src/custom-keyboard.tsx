@@ -2,7 +2,7 @@ import React, { Key } from "react";
 import { KeyMapping } from './types/key-mappings'
 import * as FA from "react-icons/fa";
 import * as BS from "react-icons/bs";
-import * as TB from "react-icons/tb";
+import * as CustomIcons from "./types/icons";
 import * as MD from "react-icons/md";
 import * as IO from "react-icons/io5";
 
@@ -13,19 +13,19 @@ export function GenerateDeckyExtendedLayout() : Array<KeyMapping> {
     let arrow_left = <FA.FaArrowLeft/>;
     let arrow_right = <FA.FaArrowRight/>;
     let context_icon = <FA.FaBars/>;
-    let vkclose_icon = <MD.MdKeyboardHide/>
+    let vkclose_icon = <CustomIcons.VKClose/>
     let media_backwards = <MD.MdFastRewind style={{width: "auto", height: "auto"}}/>;
     let media_forwards = <MD.MdFastForward style={{width: "auto", height: "auto"}}/>;
     let media_volup = <MD.MdVolumeUp style={{width: "auto", height: "auto"}}/>;
     let media_voldown = <MD.MdVolumeUp style={{width: "auto", height: "auto"}}/>;
     let media_volmute = <MD.MdVolumeMute style={{width: "auto", height: "auto"}}/>;
     let meta_icon = <BS.BsFillXDiamondFill/>;
-    let layout_icon = <TB.TbLetterCase/>;
+    let layout_icon = <span>ABC</span>;
     let home_icon = <span style={{zoom: "0.7", display: 'inline-flex'}}>Home</span>;
     let del_icon = <span style={{zoom: "0.7", display: 'inline-flex'}}>Delete</span>;
     let ins_icon = <span style={{zoom: "0.7", display: 'inline-flex'}}>Insert</span>;
     let pgup_icon = <span style={{zoom: "0.7", display: 'inline-flex'}}>PgUp</span>;
-    let pausebreak_icon = <span style={{zoom: "0.7", display: 'inline-flex'}}>Pause / Break</span>;
+    let pausebreak_icon = <span style={{zoom: "0.7", display: 'inline-flex'}}>Pause Break</span>;
     let printscreen_icon = <span style={{zoom: "0.7", display: 'inline-flex'}}>PrtSc</span>;
     let cut_icon = <MD.MdContentCut/>;
     let paste_icon = <MD.MdContentPaste/>;
@@ -39,8 +39,7 @@ export function GenerateDeckyExtendedLayout() : Array<KeyMapping> {
     let fn_icon = 'Fn';
     let reserved_icon = '.';
     let plugin_icon = <IO.IoExtensionPuzzleSharp style={{width: "auto", height: "auto"}}/>;
-
-
+    let capslock_icon = <span style={{zoom: "0.7", display: 'inline-flex'}}>Caps Lock</span>;
     let num_7_label = <span style={{display: "-webkit-inline-box"}}>7</span>;
     let num_8_label = <span style={{display: "-webkit-inline-box"}}>8</span>;
     let num_9_label = <span style={{display: "-webkit-inline-box"}}>9</span>;
@@ -50,7 +49,7 @@ export function GenerateDeckyExtendedLayout() : Array<KeyMapping> {
 
     let keyList = Array<KeyMapping>();
 
-    keyList.push(KeyMapping.keyGen(0, 0,  [{key: "Deckyboard_Escape", label: "Esc", type: 3 }]));
+    keyList.push(KeyMapping.keyGen(0, 0,  [{key: "Deckyboard_Escape", label: "Esc", type: 7 }]));
     keyList.push(KeyMapping.keyGen(0, 1,  [{key: "Deckyboard_F1", label: "F1" }, {key: "Deckyboard_MediaBackward", label: media_backwards  }]));
     keyList.push(KeyMapping.keyGen(0, 2,  [{key: "Deckyboard_F2", label: "F2" }, {key: "Deckyboard_MediaPlay", label: play_pause      }]));
     keyList.push(KeyMapping.keyGen(0, 3,  [{key: "Deckyboard_F3", label: "F3" }, {key: "Deckyboard_MediaForward", label: media_forwards   }]));
@@ -65,8 +64,8 @@ export function GenerateDeckyExtendedLayout() : Array<KeyMapping> {
     keyList.push(KeyMapping.keyGen(0, 12, [{key: "Deckyboard_F12", label: "F12" }, {key: "Deckyboard_VolumeUp", label: media_volup   }]));
     keyList.push(KeyMapping.keyGen(0, 13, [{key: "Backspace", label: "#Key_Backspace", leftActionButton: 2, type: 8 }]));
 
-    keyList.push(KeyMapping.keyGen(1, 0,  [{key: "Tab", label: "#Key_Tab", type: 3  }]));
-    keyList.push(KeyMapping.keyGen(1, 1,  [{key: "Deckyboard_Reserved", label: reserved_icon }]));
+    keyList.push(KeyMapping.keyGen(1, 0,  [{key: "Tab", label: "#Key_Tab", type: 7  }]));
+    keyList.push(KeyMapping.keyGen(1, 1,  [{key: "Deckyboard_CapsLock", label: capslock_icon }]));
     keyList.push(KeyMapping.keyGen(1, 2,  [{key: "Deckyboard_Delete", label: del_icon }]));
     keyList.push(KeyMapping.keyGen(1, 3,  [{key: "Deckyboard_Insert", label: ins_icon }]));
     keyList.push(KeyMapping.keyGen(1, 4,  [{key: "Deckyboard_Home", label: home_icon }]));
@@ -80,7 +79,7 @@ export function GenerateDeckyExtendedLayout() : Array<KeyMapping> {
     keyList.push(KeyMapping.keyGen(1, 12, [{key: "Deckyboard_ClipboardSelectAll", label: selectall_icon }]));
     keyList.push(KeyMapping.keyGen(1, 13, [{key: "Deckyboard_Reserved", label: reserved_icon, type: 8 }]));
 
-    keyList.push(KeyMapping.keyGen(2, 0,  [{key: "Deckyboard_CapsLock", label: "#Key_Caps", type: 3 }]));
+    keyList.push(KeyMapping.keyGen(2, 0,  [{key: "Deckyboard_Reserved", label: reserved_icon, type: 7 }]));
     keyList.push(KeyMapping.keyGen(2, 1,  [{key: "Deckyboard_NumLock", label: numlock_icon }]));
     keyList.push(KeyMapping.keyGen(2, 2,  [{key: "Deckyboard_Reserved", label: reserved_icon }]));
     keyList.push(KeyMapping.keyGen(2, 3,  [{key: "Deckyboard_End", label: end_icon }]));
@@ -95,7 +94,7 @@ export function GenerateDeckyExtendedLayout() : Array<KeyMapping> {
     keyList.push(KeyMapping.keyGen(2, 12, [{key: "Deckyboard_ClipboardCopy", label: copy_icon }]));
     keyList.push(KeyMapping.keyGen(2, 13, [{key: "Enter", label: "#Key_Enter", leftActionButton: 15, type: 8 }]));
 
-    keyList.push(KeyMapping.keyGen(3, 0,  [{key: "Deckyboard_LShift", label: "LShift",type: 3 }]));
+    keyList.push(KeyMapping.keyGen(3, 0,  [{key: "Deckyboard_LShift", label: "LShift",type: 7 }]));
     keyList.push(KeyMapping.keyGen(3, 1,  [{key: "Deckyboard_ScrollLock", label: scrolllock_icon }]));
     keyList.push(KeyMapping.keyGen(3, 2,  [{key: "Deckyboard_Reserved", label: reserved_icon }]));
     keyList.push(KeyMapping.keyGen(3, 3,  [{key: "Deckyboard_ArrowLeft", label: arrow_left }]));
