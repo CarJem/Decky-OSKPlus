@@ -7,4 +7,12 @@ export interface PluginSettings {
     EnableOrientationSwapKey: boolean;
     UnlockKeyboardMaxLength: boolean;
     DismissOnEnter: boolean;
+    logging: {
+        events: boolean;
+        init: boolean;
+        mount: boolean;
+        internalKeyType: boolean;
+        virtualKeys: boolean; 
+        keyType: boolean;
+    }
 }

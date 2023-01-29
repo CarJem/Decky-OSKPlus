@@ -32,7 +32,15 @@ const Settings: PluginSettings = {
 	EnableEscKey: false,
 	EnableOrientationSwapKey: true,
 	UnlockKeyboardMaxLength: false,
-	DismissOnEnter: false
+	DismissOnEnter: false,
+	logging: {
+		events: false,
+		init: false,
+		mount: false,
+		internalKeyType: false,
+		keyType: false,
+		virtualKeys: false,
+	}
 };
 
 
@@ -40,12 +48,12 @@ const Settings: PluginSettings = {
 export default definePlugin((serverApi: ServerAPI) =>
 {
 	function OnDismount() {
-		log("unloaded");
+		if (Settings.logging.mount) log("unloaded");
 		keyboard.OnDismount();
 	}
 
 	function OnMount() {
-		log("loaded");
+		if (Settings.logging.mount) log("loaded");
 		python.setServer(serverApi);
 		style.setSettings(Settings);
 		keyboard.OnMount(serverApi, Settings);
