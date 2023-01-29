@@ -6,4 +6,5 @@ export interface PluginSettings {
     EnableEscKey: boolean;
     EnableOrientationSwapKey: boolean;
     UnlockKeyboardMaxLength: boolean;
+    DismissOnEnter: boolean;
 }

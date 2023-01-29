@@ -2,6 +2,8 @@ import { findSP } from "decky-frontend-lib";
 import { KeyEntry, KeyMapping, KeyType } from "../types/key-mappings";
 import { virtualKeyboardClasses } from '../types/personal-static-classes'
 
+
+
 export class MoveKey
 {
 
@@ -9,12 +11,14 @@ export class MoveKey
     public static readonly MoveKeyCode: string = "VKMove";
     private static LastOrientation: string = "center-bottom";
 
+
+
     public static SaveOrientation()
     {
         let className = virtualKeyboardClasses.Keyboard;
         let osk = findSP().document.getElementsByClassName(className)[0] as HTMLElement;
-
-        if (osk.classList.contains("center-top"))
+        if (osk) {
+            if (osk.classList.contains("center-top"))
             this.LastOrientation = "center-top";
         else if (osk.classList.contains("center-bottom"))
             this.LastOrientation = "center-bottom";
@@ -26,6 +30,8 @@ export class MoveKey
             this.LastOrientation = "upper-left";
         else if (osk.classList.contains("upper-right"))
             this.LastOrientation = "upper-right";
+        }
+
     }
     public static LoadOrientation() 
     {

@@ -12,33 +12,36 @@ export class DictationKey extends CustomKeyBehavior {
         super('Dicate');
     }
 
+    public EndDictation() : void {
+        this.dictateListening = false;
+        var response = this.server?.callPluginMethod<any, boolean>("endDictation", {});
+        log("endDictate", response)
+        // serverApi.fetchNoCors('http://localhost:9000/hooks/end-dictate')
+        //   .then((data) => console.log(data));
+        KeyMapping.changeLabelByKeyCode(this.keyCode, <FaMicrophone/>)
+        //this.server?.toaster.toast({
+        //    title: "Finished Listening.",
+        //    body: "Dictation finished!"
+        //});
+    }
+
+    public StartDictation() : void {
+        this.dictateListening = true;
+        var response = this.server?.callPluginMethod<any, boolean>("startDictation", {});
+        log("startDictation", response)
+
+        // serverApi.fetchNoCors('http://localhost:9000/hooks/start-dictate')
+        //   .then((data) => console.log(data));
+        KeyMapping.changeLabelByKeyCode(this.keyCode, <icons.ActiveIcon/>)
+        //this.server?.toaster.toast({
+        //    title: "Listening...",
+        //    body: "Dictation started!"
+        //});
+    }
+
     public override OnAction(): void
     {
-        if (!this.dictateListening)
-        {
-            this.dictateListening = true;
-            var response = this.server?.callPluginMethod<any, boolean>("startDictation", {});
-            log("startDictation", response)
-    
-            // serverApi.fetchNoCors('http://localhost:9000/hooks/start-dictate')
-            //   .then((data) => console.log(data));
-            KeyMapping.changeLabelByKeyCode(this.keyCode, <icons.ActiveIcon/>)
-            //this.server?.toaster.toast({
-            //    title: "Listening...",
-            //    body: "Dictation started!"
-            //});
-        } else
-        {
-            this.dictateListening = false;
-            var response = this.server?.callPluginMethod<any, boolean>("endDictation", {});
-            log("endDictate", response)
-            // serverApi.fetchNoCors('http://localhost:9000/hooks/end-dictate')
-            //   .then((data) => console.log(data));
-            KeyMapping.changeLabelByKeyCode(this.keyCode, <FaMicrophone/>)
-            //this.server?.toaster.toast({
-            //    title: "Finished Listening.",
-            //    body: "Dictation finished!"
-            //});
-        }
+        if (!this.dictateListening) this.StartDictation();
+        else this.EndDictation();
     }
 }

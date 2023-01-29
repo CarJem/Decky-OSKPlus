@@ -4,17 +4,15 @@ import
 	PanelSection,
 	PanelSectionRow,
 	ServerAPI,
-	staticClasses,
-	findModuleChild,
-	findInReactTree
+	staticClasses
 } from "decky-frontend-lib";
 import { VFC } from "react";
 import { FaKeyboard } from "react-icons/fa";
-import { log } from "./logger";
 import * as python from './python';
 import * as keyboard from './keyboard';
 import { PluginSettings } from "./types/plugin-settings";
 import * as style from "./style";
+import { log } from "./logger";
 
 const Content: VFC<{ serverAPI: ServerAPI }> = ({ }) =>
 {
@@ -33,46 +31,24 @@ const Settings: PluginSettings = {
 	EnableAltKey: false,
 	EnableEscKey: false,
 	EnableOrientationSwapKey: true,
-	UnlockKeyboardMaxLength: false
+	UnlockKeyboardMaxLength: false,
+	DismissOnEnter: false
 };
 
-const KeyboardManager = findModuleChild((m) => {
-	if (typeof m !== "object") return undefined;
-	for (let prop in m) {
-		if (m[prop]?.m_WindowStore) 
-			return m[prop].ActiveWindowInstance.VirtualKeyboardManager;
-	}
-});
+
 
 export default definePlugin((serverApi: ServerAPI) =>
 {
-
-	var KeyboardOpenedCallback: any;
-
-	function OnCallback(e: boolean) {
-		log("isOpened", e)
-		if (!e) return;
-
-		setTimeout(() => {
-			let instance = findInReactTree(
-				(document.getElementById('root') as any)._reactRootContainer._internalRoot.current, 
-				((x) => x?.memoizedProps?.className?.startsWith('virtualkeyboard_Keyboard'))
-			);			
-			log("keyboardInstance", instance);
-			if (instance) keyboard.Init(instance);
-		}, 10);
-	}
-
 	function OnDismount() {
-		KeyboardOpenedCallback?.Unregister();
+		log("unloaded");
+		keyboard.OnDismount();
 	}
 
 	function OnMount() {
+		log("loaded");
 		python.setServer(serverApi);
-		keyboard.setServer(serverApi);
-		keyboard.setSettings(Settings);
 		style.setSettings(Settings);
-		KeyboardOpenedCallback = KeyboardManager.m_bIsVirtualKeyboardOpen.m_callbacks.Register(OnCallback)
+		keyboard.OnMount(serverApi, Settings);
 	}
 
 	OnMount();
