@@ -2,13 +2,12 @@ import { afterPatch, beforePatch, findInReactTree, findModuleChild, Patch } from
 import { MdOutlineMic } from "react-icons/md";
 import { log } from "./logger";
 import { PluginSettings } from './types/plugin-settings';
-import { DictationKey } from './behaviors/dictation-key';
+import * as DictationKey from './behaviors/dictation-key';
 import { KeyDefinition, KeyMapping } from './types/key-mappings';
 import { ServerAPI } from "decky-frontend-lib";
 import * as style from './style';
-import { CustomKeyBehavior } from "./behaviors/custom-key-behavior";
 import { KeyRepeat } from "./behaviors/key-repeat";
-import * as CustomKeyboard from './custom-keyboard';
+import * as DeckyExtendedLayout from './layouts/decky-extended';
 
 import * as MoveKey from "./behaviors/move-key";
 import { runDetached, waitforCondition } from "./extensions";
@@ -34,17 +33,12 @@ const KeyboardInstance = () => { return findInReactTree(
     ((x) => x?.memoizedProps?.className?.startsWith('virtualkeyboard_Keyboard'))
 )};
 
-const CustomKeyBehavior_Dictation: DictationKey = new DictationKey();
-const CustomKey_Dictation = new KeyMapping(1,   4, KeyDefinition.fromCustom({ key: CustomKeyBehavior_Dictation.keyCode, label: <MdOutlineMic />, type: 4 }));
-const DeckyCustom_OverrideLayoutName = "qwerty_int";
+const CustomKey_Dictation = new KeyMapping(1,   4, KeyDefinition.fromCustom({ key: DictationKey.keyCode, label: <MdOutlineMic />, type: 4 }));
 
 
-function LoadCustomLayout() {
-    let custom_keyboard = CustomKeyboard.GenerateDeckyExtendedLayout();
-    KeyMapping.KeyboardRoot.stateNode.state.standardLayout.rgLayout = [[],[],[],[],[]];
-    custom_keyboard.forEach((mapping) => {
-        KeyMapping.insertKeyboardKey(mapping)
-    });
+function LoadDeckyExtendedLayout() {
+    let custom_keyboard = DeckyExtendedLayout.GenerateLayout();
+    KeyMapping.setKeyboardLayout(custom_keyboard);
 }
 
 function LoadNormalLayout() {
@@ -56,11 +50,11 @@ function UpdateLayout()
     KeyMapping.prepareKeyboardRoot();
     MoveKey.FixVKClose();
     MoveKey.Load();
-    DismissOnEnter.ChangeState(settings?.DismissOnEnter);
+    DismissOnEnter.ChangeState(settings?.behavior.dismissOnEnter);
 
     let layout_name = KeyMapping.KeyboardRoot.stateNode.state.standardLayout.name;
-    if (layout_name === DeckyCustom_OverrideLayoutName)         
-        LoadCustomLayout();
+    if (layout_name === settings?.custom_layout.override_layout_name && settings?.custom_layout.enabled)         
+        LoadDeckyExtendedLayout();
     else
         LoadNormalLayout();
 }
@@ -72,11 +66,11 @@ function OnTypeKeyInternal(e: any[])
     if (settings?.logging.internalKeyType) 
         log("OnTypeKeyInternal", e);
 
-    if (KeyRepeat.IsRepeatable(key.strKey) && key.strKeycode !== KeyRepeat.RepeatableKeyCode)
+    if (KeyRepeat.IsRepeatable(key.strKey) && key.strKeycode !== KeyRepeat.RepeatableKeyCode && settings?.behavior.allowKeyRepeat)
         KeyRepeat.Trigger(key.strKey);
 
-    if (settings?.DictationEnabled && key.strKey == CustomKeyBehavior_Dictation.keyCode)
-        CustomKeyBehavior_Dictation.OnAction();
+    if (settings?.dictation.enabled && key.strKey == DictationKey.keyCode)
+        DictationKey.OnAction();
  
     return e;
 }
@@ -89,7 +83,7 @@ function AfterTypeKeyInternal(e: any[])
         log("AfterTypeKeyInternal", e);
 
     if (key.strKey == "SwitchKeys_Layout")
-        setTimeout(UpdateLayout, 100);
+        setTimeout(UpdateLayout, 0);
 
     MoveKey.Save();
  
@@ -129,7 +123,7 @@ function OnOpened() {
 }
 
 function OnClosed() {
-    CustomKeyBehavior_Dictation.EndDictation();
+    DictationKey.EndDictation();
 }
 
 function OnVisibilityChanged(isOpen: boolean) {
@@ -146,7 +140,7 @@ export function OnMount(_server: ServerAPI, _settings: PluginSettings)
     KeyboardOpenedCallback = VirtualKeyboardManager.m_bIsVirtualKeyboardOpen.m_callbacks.Register(OnVisibilityChanged);
     HandleVirtualKeyDownPatch = beforePatch(VirtualKeyboardManager, 'HandleVirtualKeyDown', OnHandleVirtualKeyDown);
     HandleVirtualKeyUpPatch = beforePatch(VirtualKeyboardManager, 'HandleVirtualKeyUp', OnHandleVirtualKeyUp);
-    CustomKeyBehavior_Dictation.setServer(_server);
+    DictationKey.setServer(_server);
 }
 
 export function OnDismount()

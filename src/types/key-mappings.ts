@@ -147,13 +147,47 @@ export class KeyMapping {
 
     //#endregion
 
+    //#region Layout / Key Generations
+
+    public static addShiftKeys(key: string) {
+        Object.defineProperty(this.KeyboardRoot.elementType.s_keyToggleData, key, {value: key, writable: true });
+    }
+
+    public static layoutGen(layout: Array<Array<any>>) : Array<KeyMapping> {
+        let resultingLayout = Array<KeyMapping>();
+        layout.forEach((rowList, positionY) => {
+            rowList.forEach((key, positionX) => {
+                resultingLayout.push(KeyMapping.keyGen(positionY, positionX, key));
+            });        
+        });
+        return resultingLayout;
+    }
+
     public static keyGen(positionY: number, positionX: number, definition: any) : KeyMapping {
         return new KeyMapping(positionX, positionY, KeyDefinition.fromAny(definition));
     }
 
+    //#endregion
+
+    //#region Get / Set
+
+    public static setKeyboardLayout(layout: Array<KeyMapping>) {
+        var ref_standardLayout = KeyMapping.KeyboardRoot.stateNode.state.standardLayout;
+        ref_standardLayout.rgLayout = [[],[],[],[],[]];
+
+        layout.forEach((mapping) => {
+            if (mapping === undefined) return;
+            ref_standardLayout.rgLayout[mapping.positionY].splice(mapping.positionX, 0, mapping?.definition.toInternal());
+        });
+
+        this.KeyboardRoot.stateNode.setState({standardLayout: ref_standardLayout});
+    }
+
     public static setKeyboardKey(mapping: KeyMapping) {
         let [x, y] = [mapping.positionX, mapping.positionY];
-        this.KeyboardRoot.stateNode.state.standardLayout.rgLayout[y][x] = mapping.definition.toInternal();
+        var ref_standardLayout = KeyMapping.KeyboardRoot.stateNode.state.standardLayout;
+        ref_standardLayout.rgLayout[y][x] = mapping.definition.toInternal();
+        this.KeyboardRoot.stateNode.setState({standardLayout: ref_standardLayout});
     }
 
     public static getKeyboardKey(x: number, y: number) : KeyMapping {
@@ -161,10 +195,16 @@ export class KeyMapping {
         return new KeyMapping(x, y, KeyDefinition.fromAny(value));
     }
 
+    //#endregion
+
+    //#region Utilities
+
     public static insertKeyboardKey(mapping: KeyMapping | undefined)
     {
         if (mapping === undefined) return;
-        this.KeyboardRoot.stateNode.state.standardLayout.rgLayout[mapping.positionY].splice(mapping.positionX, 0, mapping?.definition.toInternal());
+        var ref_standardLayout = KeyMapping.KeyboardRoot.stateNode.state.standardLayout;
+        ref_standardLayout.rgLayout[mapping.positionY].splice(mapping.positionX, 0, mapping?.definition.toInternal());
+        this.KeyboardRoot.stateNode.setState({standardLayout: ref_standardLayout});
     }
 
     public static findKeyboardKey(query: (value: KeyMapping) => boolean) : KeyMapping | undefined {
@@ -196,5 +236,7 @@ export class KeyMapping {
 
         this.setKeyboardKey(result);
     }
+
+    //#endregion
     
 }

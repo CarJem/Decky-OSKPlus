@@ -1,12 +1,14 @@
 export interface PluginSettings {
-    DictationEnabled: boolean;
-    EnableFunctionKeys: boolean;
-    EnableCtrlKey: boolean;
-    EnableAltKey: boolean;
-    EnableEscKey: boolean;
-    EnableOrientationSwapKey: boolean;
-    UnlockKeyboardMaxLength: boolean;
-    DismissOnEnter: boolean;
+    dictation: {
+        enabled: boolean;
+    }
+    style: {
+        unlockKeyboardLength: boolean;
+    }
+	behavior: {
+        dismissOnEnter: boolean;
+        allowKeyRepeat: boolean;
+    }
     logging: {
         events: boolean;
         init: boolean;
@@ -14,5 +16,9 @@ export interface PluginSettings {
         internalKeyType: boolean;
         virtualKeys: boolean; 
         keyType: boolean;
+    }
+    custom_layout: {
+        override_layout_name: string;
+        enabled: boolean;
     }
 }

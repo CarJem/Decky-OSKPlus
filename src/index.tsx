@@ -25,14 +25,16 @@ const Content: VFC<{ serverAPI: ServerAPI }> = ({ }) =>
 };
 
 const Settings: PluginSettings = {
-	DictationEnabled: true,
-	EnableFunctionKeys: false,
-	EnableCtrlKey: false,
-	EnableAltKey: false,
-	EnableEscKey: false,
-	EnableOrientationSwapKey: true,
-	UnlockKeyboardMaxLength: false,
-	DismissOnEnter: false,
+    dictation: {
+        enabled: true,
+    },
+    style: {
+        unlockKeyboardLength: false,
+    },
+	behavior: {
+        dismissOnEnter: true,
+		allowKeyRepeat: true,
+    },
 	logging: {
 		events: false,
 		init: false,
@@ -40,6 +42,10 @@ const Settings: PluginSettings = {
 		internalKeyType: false,
 		keyType: false,
 		virtualKeys: false,
+	},
+	custom_layout: {
+		override_layout_name: "qwerty_int",
+		enabled: true
 	}
 };
 
@@ -57,6 +63,12 @@ export default definePlugin((serverApi: ServerAPI) =>
 		python.setServer(serverApi);
 		style.setSettings(Settings);
 		keyboard.OnMount(serverApi, Settings);
+
+		//serverApi.toaster.toast({
+        //    title: "Deckyboard",
+        //    body: "Plugin Loaded",
+		//	duration: 1
+        //});
 	}
 
 	OnMount();
