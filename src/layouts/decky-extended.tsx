@@ -5,6 +5,54 @@ import * as BS from "react-icons/bs";
 import * as CustomIcons from "../types/icons";
 import * as MD from "react-icons/md";
 import * as IO from "react-icons/io5";
+import { ServerAPI } from "decky-frontend-lib";
+
+let server: ServerAPI | undefined = undefined;
+export function setServer(s: ServerAPI) { server = s; }
+
+const KeyCodes: Map<string, number> = new Map<string,number>([
+    ['F1',  59],
+    ['F2',  60],
+    ['F3',  61],
+    ['F4',  62],
+    ['F5',  63],
+    ['F6',  64],
+    ['F7',  65],
+    ['F8',  66],
+    ['F9',  67],
+    ['F10', 68],
+    ['F11', 87],
+    ['F12', 88],
+    ['NumLock', 69],
+    ['ScrollLock', 70],
+    ['CapsLock', 58],
+    ['LAlt', 56],
+    ['RAlt', 100],
+    ['LShift', 42],
+    ['RShift', 54],
+    ['LCtrl', 29],
+    ['RCtrl', 97],
+    ['Delete', 111],
+    ['Insert', 110],
+    ['Home', 102],
+    ['End', 107],
+    ['PageDown', 109],
+    ['PageUp', 104],
+    ['ArrowLeft', 105],
+    ['ArrowRight', 106],
+    ['ArrowUp', 103],
+    ['ArrowDown', 108],
+    ['Escape', 1],
+    ['PauseBrk', 119],
+    ['Context', 139],
+    ['LMeta', 125],
+    ['RMeta', 126]
+]);
+
+const ShiftKeys = ['LShift', 'RShift', 'LMeta', 'RMeta', 'LAlt', 'RAlt'];
+
+let Decky_ToggleStates: any;
+
 
 export function GenerateLayout(): Array<KeyMapping>
 {
@@ -104,7 +152,7 @@ export function GenerateLayout(): Array<KeyMapping>
             [{ key: "Deckyboard_Plugin9", label: plugin_icon }, { key: "Deckyboard_NumpadPrecent", label: "%" }],
             [{ key: "Deckyboard_Reserved", label: reserved_icon }, { key: "Deckyboard_NumpadAdd", label: "+" }],
             [{ key: "Deckyboard_PageUp", label: pgup_icon }],
-            [{ key: "Deckyboard_PageDn", label: pgdn_icon }],
+            [{ key: "Deckyboard_PageDown", label: pgdn_icon }],
             [{ key: "Shift", label: fn_icon }], //Deckyboard_Fn
             [{ key: "Deckyboard_Ex", label: ex_icon }],
             [{ key: "Deckyboard_Context", label: context_icon }],
@@ -138,3 +186,41 @@ export function GenerateLayout(): Array<KeyMapping>
 
     return KeyMapping.layoutGen(keyList);
 }
+
+export function RestoreToggleState() {
+    KeyMapping.KeyboardRoot.stateNode.setState({
+        toggleStates: Decky_ToggleStates
+    });
+}
+
+export function UpdateToggleState() {
+    Decky_ToggleStates = KeyMapping.KeyboardRoot.stateNode.toggleStates;
+}
+
+export function IsCustomKey(strKey: string) : boolean
+{
+    return strKey.startsWith('Deckyboard_');
+}
+export function OnTypeKeyInternal(strKey: string)
+{
+    let key = strKey.replace("Deckyboard_", "");
+
+    let keyCode = KeyCodes.get(key);
+    if (keyCode) {
+        if (ShiftKeys.includes(key)) {
+            var state = KeyMapping.KeyboardRoot.stateNode.state.toggleStates[strKey];
+            if (state) {
+                if (state === 0) {
+                    var response = server?.callPluginMethod<any, boolean>("keyPress", {"keyCode": keyCode});
+                }
+                else if (state === 1) {
+                    var response = server?.callPluginMethod<any, boolean>("keyRelease", {"keyCode": keyCode});
+                }
+            }
+        }
+        else {
+            var response = server?.callPluginMethod<any, boolean>("keyClick", {"keyCode": keyCode});
+        }
+    }
+}
+

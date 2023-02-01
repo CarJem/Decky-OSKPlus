@@ -38,6 +38,35 @@ class Plugin:
 
     #endregion
 
+    async def keyClick(self, keyCode):
+        logger.info("attemptingKeyClick")
+        cmd = [
+            os.path.join(os.path.dirname(__file__), "out/ydotool"), 
+            "key", 
+            str(keyCode) + ":1", 
+            str(keyCode) + ":0"
+        ]
+        logger.info(cmd)
+        Popen(cmd, env=os.environ.copy())
+
+    async def keyPress(self, keyCode):
+        cmd = [
+            os.path.join(os.path.dirname(__file__), "out/ydotool"), 
+            "key", 
+            str(keyCode) + ":1"
+        ]
+        logger.info(cmd)
+        Popen(cmd, env=os.environ.copy())
+
+    async def keyRelease(self, keyCode):
+        cmd = [
+            os.path.join(os.path.dirname(__file__), "out/ydotool"), 
+            "key", 
+            str(keyCode) + ":0"
+        ]
+        logger.info(cmd)
+        Popen(cmd, env=os.environ.copy())
+
     async def _main(self):
         logger.debug("Starting ydotoold")
         self.ydotoold_process = Popen([os.path.join(os.path.dirname(__file__), "out/ydotoold")])

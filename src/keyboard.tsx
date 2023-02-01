@@ -69,6 +69,13 @@ function OnTypeKeyInternal(e: any[])
     if (KeyRepeat.IsRepeatable(key.strKey) && key.strKeycode !== KeyRepeat.RepeatableKeyCode && settings?.behavior.allowKeyRepeat)
         KeyRepeat.Trigger(key.strKey);
 
+        
+    if (DeckyExtendedLayout.IsCustomKey(key.strKey)) {
+        DeckyExtendedLayout.UpdateToggleState();
+        DeckyExtendedLayout.OnTypeKeyInternal(key.strKey);
+        return [];
+    }
+
     if (settings?.dictation.enabled && key.strKey == DictationKey.keyCode)
         DictationKey.OnAction();
  
@@ -83,7 +90,7 @@ function AfterTypeKeyInternal(e: any[])
         log("AfterTypeKeyInternal", e);
 
     if (key.strKey == "SwitchKeys_Layout")
-        setTimeout(UpdateLayout, 0);
+        runDetached(UpdateLayout);
 
     MoveKey.Save();
  
@@ -141,6 +148,7 @@ export function OnMount(_server: ServerAPI, _settings: PluginSettings)
     HandleVirtualKeyDownPatch = beforePatch(VirtualKeyboardManager, 'HandleVirtualKeyDown', OnHandleVirtualKeyDown);
     HandleVirtualKeyUpPatch = beforePatch(VirtualKeyboardManager, 'HandleVirtualKeyUp', OnHandleVirtualKeyUp);
     DictationKey.setServer(_server);
+    DeckyExtendedLayout.setServer(_server);
 }
 
 export function OnDismount()
