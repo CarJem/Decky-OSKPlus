@@ -7,7 +7,7 @@ import { ServerAPI } from "decky-frontend-lib";
 
 let dictateListening: boolean = false;
 let server: ServerAPI | undefined = undefined;
-export const keyCode = "SwitchKeys_Deckyboard_Dictate";
+export const keyCode = "Deckyboard_Dictate";
 
 export function setServer(s: ServerAPI) { server = s; }
 

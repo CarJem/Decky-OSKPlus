@@ -16,6 +16,7 @@ export interface PluginSettings {
         internalKeyType: boolean;
         virtualKeys: boolean; 
         keyType: boolean;
+        afterInternalKeyType: boolean;
     }
     custom_layout: {
         override_layout_name: string;

@@ -49,6 +49,16 @@ class Plugin:
         logger.info(cmd)
         Popen(cmd, env=os.environ.copy())
 
+    async def typeText(self, text):
+        logger.info("attemptingTypeText")
+        cmd = [
+            os.path.join(os.path.dirname(__file__), "out/ydotool"), 
+            "type", 
+            str(text)
+        ]
+        logger.info(cmd)
+        Popen(cmd, env=os.environ.copy())
+
     async def keyPress(self, keyCode):
         cmd = [
             os.path.join(os.path.dirname(__file__), "out/ydotool"), 

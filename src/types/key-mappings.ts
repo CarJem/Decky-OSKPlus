@@ -9,6 +9,10 @@ export enum KeyType {
 }
 
 export class KeyEntry {
+    toKeyCode(): any
+    {
+        throw new Error("Method not implemented.");
+    }
     deckyType?: KeyType;
     isCustom?: boolean;
     key?: string;
@@ -60,6 +64,7 @@ export class KeyEntry {
 }
 
 export class KeyDefinition {
+
     keyType: KeyType;
     keys: Array<KeyEntry>
 
@@ -127,19 +132,35 @@ export class KeyMapping {
     definition: KeyDefinition;
     positionX: number;
     positionY: number;
+    keyCode: number;
 
-    public constructor(positionX: number, positionY: number, definition: KeyDefinition) {
+    public constructor(positionX: number, positionY: number, definition: KeyDefinition, keyCode: number) {
         this.definition = definition;
         this.positionX = positionX;
         this.positionY = positionY;
+        this.keyCode = keyCode;
     }
 
     //#region Keyboard Root
 
-    public static prepareKeyboardRoot()
+    public static Init()
     {
         log("beforeLayoutClone", this.KeyboardRoot.stateNode.state.standardLayout);
-        this.KeyboardRoot.stateNode.state.standardLayout = cloneDeep(this.KeyboardRoot.stateNode.state.standardLayout);
+        let clonedLayout = cloneDeep(this.KeyboardRoot.stateNode.state.standardLayout);
+
+        if (clonedLayout.rgKeycodes == undefined) {
+            clonedLayout.rgKeycodes = new Array<Array<any>>();
+            let layout = clonedLayout.rgLayout as Array<Array<any>>;
+            layout.forEach((row, positionY) => {
+                clonedLayout.rgKeycodes.push(new Array<any>());
+                row.forEach((key) => {
+                    clonedLayout.rgKeycodes[positionY].push(0);
+                });
+            });        
+        }
+
+        this.KeyboardRoot.stateNode.state.standardLayout = clonedLayout;
+
         log("afterLayoutClone", this.KeyboardRoot.stateNode.state.standardLayout);
     }
 
@@ -153,18 +174,19 @@ export class KeyMapping {
         Object.defineProperty(this.KeyboardRoot.elementType.s_keyToggleData, key, {value: key, writable: true });
     }
 
-    public static layoutGen(layout: Array<Array<any>>) : Array<KeyMapping> {
+    public static layoutGen(layout: Array<Array<any>>, keyCodes: Array<Array<number>>) : Array<KeyMapping> {
         let resultingLayout = Array<KeyMapping>();
         layout.forEach((rowList, positionY) => {
             rowList.forEach((key, positionX) => {
-                resultingLayout.push(KeyMapping.keyGen(positionY, positionX, key));
+                let keyCode = keyCodes[positionY][positionX]  ? keyCodes[positionY][positionX] : 0;
+                resultingLayout.push(KeyMapping.keyGen(positionY, positionX, key, keyCode));
             });        
         });
         return resultingLayout;
     }
 
-    public static keyGen(positionY: number, positionX: number, definition: any) : KeyMapping {
-        return new KeyMapping(positionX, positionY, KeyDefinition.fromAny(definition));
+    public static keyGen(positionY: number, positionX: number, definition: any, keyCode: number = 0) : KeyMapping {
+        return new KeyMapping(positionX, positionY, KeyDefinition.fromAny(definition), keyCode);
     }
 
     //#endregion
@@ -174,10 +196,12 @@ export class KeyMapping {
     public static setKeyboardLayout(layout: Array<KeyMapping>) {
         var ref_standardLayout = KeyMapping.KeyboardRoot.stateNode.state.standardLayout;
         ref_standardLayout.rgLayout = [[],[],[],[],[]];
+        ref_standardLayout.rgKeycodes = [[],[],[],[],[]];
 
         layout.forEach((mapping) => {
             if (mapping === undefined) return;
             ref_standardLayout.rgLayout[mapping.positionY].splice(mapping.positionX, 0, mapping?.definition.toInternal());
+            ref_standardLayout.rgKeycodes[mapping.positionY].splice(mapping.positionX, 0, mapping?.keyCode);
         });
 
         this.KeyboardRoot.stateNode.setState({standardLayout: ref_standardLayout});
@@ -187,12 +211,14 @@ export class KeyMapping {
         let [x, y] = [mapping.positionX, mapping.positionY];
         var ref_standardLayout = KeyMapping.KeyboardRoot.stateNode.state.standardLayout;
         ref_standardLayout.rgLayout[y][x] = mapping.definition.toInternal();
+        ref_standardLayout.rgKeycodes[y][x] = mapping.keyCode;
         this.KeyboardRoot.stateNode.setState({standardLayout: ref_standardLayout});
     }
 
     public static getKeyboardKey(x: number, y: number) : KeyMapping {
         let value = this.KeyboardRoot.stateNode.state.standardLayout.rgLayout[y][x];
-        return new KeyMapping(x, y, KeyDefinition.fromAny(value));
+        let keyCode = this.KeyboardRoot.stateNode.state.standardLayout.rgKeycodes[y][x] ? this.KeyboardRoot.stateNode.state.rgKeycodes[y][x] : 0;
+        return new KeyMapping(x, y, KeyDefinition.fromAny(value), keyCode);
     }
 
     //#endregion
@@ -204,6 +230,7 @@ export class KeyMapping {
         if (mapping === undefined) return;
         var ref_standardLayout = KeyMapping.KeyboardRoot.stateNode.state.standardLayout;
         ref_standardLayout.rgLayout[mapping.positionY].splice(mapping.positionX, 0, mapping?.definition.toInternal());
+        ref_standardLayout.rgKeycodes[mapping.positionY].splice(mapping.positionX, 0, mapping?.keyCode);
         this.KeyboardRoot.stateNode.setState({standardLayout: ref_standardLayout});
     }
 

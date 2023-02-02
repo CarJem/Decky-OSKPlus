@@ -26,7 +26,7 @@ function GetNextLocation() : number {
     return KeyMapping.KeyboardRoot.stateNode.m_iNextKeyboardLocation;
 }
 
-export function Load()
+export function Init()
 {
     KeyMapping.KeyboardRoot.stateNode.m_rgKeyboardLocations = Orientations;
 

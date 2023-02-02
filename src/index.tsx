@@ -42,6 +42,7 @@ const Settings: PluginSettings = {
 		internalKeyType: false,
 		keyType: false,
 		virtualKeys: false,
+		afterInternalKeyType: true,
 	},
 	custom_layout: {
 		override_layout_name: "qwerty_int",

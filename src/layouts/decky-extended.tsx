@@ -7,51 +7,7 @@ import * as MD from "react-icons/md";
 import * as IO from "react-icons/io5";
 import { ServerAPI } from "decky-frontend-lib";
 
-let server: ServerAPI | undefined = undefined;
-export function setServer(s: ServerAPI) { server = s; }
 
-const KeyCodes: Map<string, number> = new Map<string,number>([
-    ['F1',  59],
-    ['F2',  60],
-    ['F3',  61],
-    ['F4',  62],
-    ['F5',  63],
-    ['F6',  64],
-    ['F7',  65],
-    ['F8',  66],
-    ['F9',  67],
-    ['F10', 68],
-    ['F11', 87],
-    ['F12', 88],
-    ['NumLock', 69],
-    ['ScrollLock', 70],
-    ['CapsLock', 58],
-    ['LAlt', 56],
-    ['RAlt', 100],
-    ['LShift', 42],
-    ['RShift', 54],
-    ['LCtrl', 29],
-    ['RCtrl', 97],
-    ['Delete', 111],
-    ['Insert', 110],
-    ['Home', 102],
-    ['End', 107],
-    ['PageDown', 109],
-    ['PageUp', 104],
-    ['ArrowLeft', 105],
-    ['ArrowRight', 106],
-    ['ArrowUp', 103],
-    ['ArrowDown', 108],
-    ['Escape', 1],
-    ['PauseBrk', 119],
-    ['Context', 139],
-    ['LMeta', 125],
-    ['RMeta', 126]
-]);
-
-const ShiftKeys = ['LShift', 'RShift', 'LMeta', 'RMeta', 'LAlt', 'RAlt'];
-
-let Decky_ToggleStates: any;
 
 
 export function GenerateLayout(): Array<KeyMapping>
@@ -95,7 +51,7 @@ export function GenerateLayout(): Array<KeyMapping>
     let num_divide_label = <span style={{ display: "-webkit-inline-box" }}>/</span>;
     let dummy_label = <span style={{ display: "-webkit-inline-box" }}> </span>;
 
-    let keyList = [
+    let keyList: Array<Array<any>> = [
         [
             [{ key: "Deckyboard_Reserved", label: reserved_icon }],
             [{ key: "Deckyboard_F1", label: "F1" }, { key: "Deckyboard_MediaBackward", label: media_backwards }],
@@ -110,10 +66,10 @@ export function GenerateLayout(): Array<KeyMapping>
             [{ key: "Deckyboard_F10", label: "F10" }, { key: "Deckyboard_VolumeMute", label: media_volmute }],
             [{ key: "Deckyboard_F11", label: "F11" }, { key: "Deckyboard_VolumeDown", label: media_voldown }],
             [{ key: "Deckyboard_F12", label: "F12" }, { key: "Deckyboard_VolumeUp", label: media_volup }],
-            [{ key: "Backspace", label: "#Key_Backspace", leftActionButton: 2, type: 9 }],
+            [{ key: "Backspace", label: "#Key_Backspace", leftActionButton: 2, type: 9, deckyKeyCode: 14 }],
         ],
         [
-            [{ key: "Tab", label: "#Key_Tab", type: 3 }],
+            [{ key: "Tab", label: "#Key_Tab", type: 3, deckyKeyCode: 15 }],
             [{ key: "Deckyboard_Delete", label: del_icon }],
             [{ key: "Deckyboard_Insert", label: ins_icon }],
             [{ key: "Deckyboard_Home", label: home_icon }],
@@ -141,7 +97,7 @@ export function GenerateLayout(): Array<KeyMapping>
             [{ key: "Deckyboard_ClipboardCopy", label: copy_icon }],
             [{ key: "Deckyboard_ClipboardPaste", label: paste_icon }],
             [{ key: "Deckyboard_ClipboardSelectAll", label: selectall_icon }],
-            [{ key: "Enter", label: "#Key_Enter", leftActionButton: 15, type: 1 }],
+            [{ key: "Enter", label: "#Key_Enter", leftActionButton: 15, type: 1, deckyKeyCode: 28 }],
         ],
         [
             [{ key: "Deckyboard_LShift", label: "LShift", type: 7 }],
@@ -163,64 +119,28 @@ export function GenerateLayout(): Array<KeyMapping>
             [{ key: "Deckyboard_LMeta", label: meta_icon, type: 4 }],
             [{ key: "SwitchKeys_Layout", label: layout_icon, type: 4 }],
             [{ key: "Deckyboard_LAlt", label: "LAlt", type: 3 }],
-            [{ key: " ", label: " ", type: 10, leftActionButton: 3 }],
+            [{ key: " ", label: " ", type: 10, leftActionButton: 3, deckyKeyCode: 57 }],
             [{ key: "Deckyboard_RAlt", label: "RAlt", type: 3 }],
             [{ key: "Deckyboard_RMeta", label: meta_icon, type: 4 }],
             [{ key: "Deckyboard_RCtrl", label: "RCtrl", type: 3 }],
             [{ key: "VKClose", label: vkclose_icon, type: 5, }, { key: "VKMove", type: 5, label: "#Key_Move" }],
     ]];
 
-    KeyMapping.addShiftKeys("Deckyboard_LCtrl");
-    KeyMapping.addShiftKeys("Deckyboard_LMeta");
-    KeyMapping.addShiftKeys("Deckyboard_LAlt");
-    KeyMapping.addShiftKeys("Deckyboard_LShift");
 
-    KeyMapping.addShiftKeys("Deckyboard_RCtrl");
-    KeyMapping.addShiftKeys("Deckyboard_RMeta");
-    KeyMapping.addShiftKeys("Deckyboard_RAlt");
-    KeyMapping.addShiftKeys("Deckyboard_RShift");
+    let keyCodes: Array<Array<number>> = new Array<Array<number>>();
 
-    KeyMapping.addShiftKeys("Deckyboard_CapsLock");
-    KeyMapping.addShiftKeys("Deckyboard_ScrollLock");
-    KeyMapping.addShiftKeys("Deckyboard_NumLock");
-
-    return KeyMapping.layoutGen(keyList);
-}
-
-export function RestoreToggleState() {
-    KeyMapping.KeyboardRoot.stateNode.setState({
-        toggleStates: Decky_ToggleStates
+    keyList.forEach((row, positionY) => {
+        keyCodes.push(new Array<any>());
+        row.forEach((key) => {
+            let keyCode = Number(key[0]["deckyKeyCode"]);
+            keyCodes[positionY].push(keyCode == Number.NaN ? 0 : keyCode);
+        });
     });
+
+    return KeyMapping.layoutGen(keyList, keyCodes);
 }
 
-export function UpdateToggleState() {
-    Decky_ToggleStates = KeyMapping.KeyboardRoot.stateNode.toggleStates;
-}
 
-export function IsCustomKey(strKey: string) : boolean
-{
-    return strKey.startsWith('Deckyboard_');
-}
-export function OnTypeKeyInternal(strKey: string)
-{
-    let key = strKey.replace("Deckyboard_", "");
 
-    let keyCode = KeyCodes.get(key);
-    if (keyCode) {
-        if (ShiftKeys.includes(key)) {
-            var state = KeyMapping.KeyboardRoot.stateNode.state.toggleStates[strKey];
-            if (state) {
-                if (state === 0) {
-                    var response = server?.callPluginMethod<any, boolean>("keyPress", {"keyCode": keyCode});
-                }
-                else if (state === 1) {
-                    var response = server?.callPluginMethod<any, boolean>("keyRelease", {"keyCode": keyCode});
-                }
-            }
-        }
-        else {
-            var response = server?.callPluginMethod<any, boolean>("keyClick", {"keyCode": keyCode});
-        }
-    }
-}
+
 
