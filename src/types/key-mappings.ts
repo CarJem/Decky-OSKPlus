@@ -217,7 +217,7 @@ export class KeyMapping {
 
     public static getKeyboardKey(x: number, y: number) : KeyMapping {
         let value = this.KeyboardRoot.stateNode.state.standardLayout.rgLayout[y][x];
-        let keyCode = this.KeyboardRoot.stateNode.state.standardLayout.rgKeycodes[y][x] ? this.KeyboardRoot.stateNode.state.rgKeycodes[y][x] : 0;
+        let keyCode = this.KeyboardRoot.stateNode.state.standardLayout.rgKeycodes[y][x] ? this.KeyboardRoot.stateNode.state.standardLayout.rgKeycodes[y][x] : 0;
         return new KeyMapping(x, y, KeyDefinition.fromAny(value), keyCode);
     }
 
