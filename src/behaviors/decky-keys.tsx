@@ -2,6 +2,7 @@ import React, { Key } from "react";
 import { KeyMapping } from '../types/key-mappings'
 import { ServerAPI } from "decky-frontend-lib";
 import * as DictationKey from '../behaviors/dictation-key';
+import * as ExtendedLayout from '../layouts/decky-extended';
 
 let server: ServerAPI | undefined = undefined;
 export function setServer(s: ServerAPI) { server = s; }
@@ -42,7 +43,9 @@ const KeyCodes: Map<string, number> = new Map<string,number>([
     ['Deckyboard_PauseBrk', 119],
     ['Deckyboard_Context', 139],
     ['Deckyboard_LMeta', 125],
-    ['Deckyboard_RMeta', 126]
+    ['Deckyboard_RMeta', 126],
+    [ExtendedLayout.ExtendedKeyCode, -1],
+    [DictationKey.keyCode, -1]
 ]);
 
 let ShiftKeys = new Map<string,number>([
@@ -53,8 +56,20 @@ let ShiftKeys = new Map<string,number>([
     ['Deckyboard_LAlt', 0],
     ['Deckyboard_RAlt', 0],
     ['Deckyboard_LCtrl', 0],
-    ['Deckyboard_RCtrl', 0]
+    ['Deckyboard_RCtrl', 0],
+    [ExtendedLayout.ExtendedKeyCode, 0],
 ]);
+
+let LockableShiftKeys = new Array<string>(
+    'Deckyboard_LShift',
+    'Deckyboard_RShift',
+    'Deckyboard_LMeta',
+    'Deckyboard_RMeta',
+    'Deckyboard_LAlt',
+    'Deckyboard_RAlt',
+    'Deckyboard_LCtrl',
+    'Deckyboard_RCtrl'
+);
 
 const ValveKeys: Map<string, number> = new Map<string,number>([
     ["", 14],
@@ -86,12 +101,18 @@ export function SendShiftKeys(strKey: string) {
     let keyCode = KeyCodes.get(strKey);
     if (ShiftKeys.has(strKey)) {
         let keyState = KeyMapping.KeyboardRoot.stateNode.state.toggleStates[strKey];
-        if (keyState === 0 && ShiftKeys.get(strKey) === 0) {
-            if (keyCode) keySend(KeySendMode.Press, keyCode);
+        if (keyState === 0 && ShiftKeys.get(strKey) === 0) 
+        {
+            if (keyCode) keySend(KeySendMode.Press, keyCode === -1 ? strKey : keyCode);
             ShiftKeys.set(strKey, 1);
         }
-        else {
-            if (keyCode) keySend(KeySendMode.Release, keyCode);
+        else if (keyState === 1 && ShiftKeys.get(strKey) === 1 && LockableShiftKeys.includes(strKey)) 
+        {
+            ShiftKeys.set(strKey, 2);
+        }
+        else 
+        {
+            if (keyCode) keySend(KeySendMode.Release, keyCode === -1 ? strKey : keyCode);
             ShiftKeys.set(strKey, 0);
         }
         SyncToggleStates();
@@ -99,19 +120,34 @@ export function SendShiftKeys(strKey: string) {
 }
 
 function keySend(mode: KeySendMode, keyCode: number | string) {
-    switch (mode) {
-        case KeySendMode.Click:
-            server?.callPluginMethod<any, boolean>("keyClick", {"keyCode": keyCode});
-            break;
-        case KeySendMode.Release:
-            server?.callPluginMethod<any, boolean>("keyRelease", {"keyCode": keyCode});
-            break;
-        case KeySendMode.Press:
-            server?.callPluginMethod<any, boolean>("keyPress", {"keyCode": keyCode});
-            break;
-        case KeySendMode.Type:
-            server?.callPluginMethod<any, boolean>("typeText", {"text": keyCode});
-            break;
+    if (keyCode === DictationKey.keyCode) {
+        DictationKey.OnAction();
+    } 
+    else if (keyCode === ExtendedLayout.ExtendedKeyCode) {
+        switch (mode) {
+            case KeySendMode.Press:
+                ExtendedLayout.Activate();
+                break;
+            case KeySendMode.Release:
+                ExtendedLayout.Deactivate();
+                break;
+        }
+    }
+    else {
+        switch (mode) {
+            case KeySendMode.Click:
+                server?.callPluginMethod<any, boolean>("keyClick", {"keyCode": keyCode});
+                break;
+            case KeySendMode.Release:
+                server?.callPluginMethod<any, boolean>("keyRelease", {"keyCode": keyCode});
+                break;
+            case KeySendMode.Press:
+                server?.callPluginMethod<any, boolean>("keyPress", {"keyCode": keyCode});
+                break;
+            case KeySendMode.Type:
+                server?.callPluginMethod<any, boolean>("typeText", {"text": keyCode});
+                break;
+        }
     }
 }
 
@@ -119,8 +155,7 @@ export function SendKeys(strKey: string)
 {
     if (IsCustomKey(strKey)) {
         let keyCode = KeyCodes.get(strKey);
-        if (keyCode) keySend(KeySendMode.Click, keyCode);
-        else if (strKey === DictationKey.keyCode) DictationKey.OnAction();
+        if (keyCode) keySend(KeySendMode.Click, keyCode === -1 ? strKey : keyCode);
     }
     else {
         let keyCode = Number(strKey);

@@ -2,7 +2,7 @@ import { MdOutlineMic } from "react-icons/md";
 import { runDetached } from "../extensions";
 import { log } from "../logger";
 import * as icons from '../types/icons';
-import { KeyMapping } from "../types/key-mappings";
+import { KeyDefinition, KeyMapping } from "../types/key-mappings";
 import { ServerAPI } from "decky-frontend-lib";
 
 let dictateListening: boolean = false;
@@ -42,3 +42,9 @@ export function OnAction()
     if (!dictateListening) StartDictation();
     else EndDictation();
 }
+
+export function InjectKey()
+{
+    KeyMapping.insertKeyboardKey(new KeyMapping(1,   4, KeyDefinition.fromCustom({ key: keyCode, label: <MdOutlineMic />, type: 4 }), 0));
+}
+

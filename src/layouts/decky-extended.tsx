@@ -1,5 +1,5 @@
 import React, { Key } from "react";
-import { KeyMapping } from '../types/key-mappings'
+import { KeyEntry, KeyMapping, KeyType } from '../types/key-mappings'
 import * as FA from "react-icons/fa";
 import * as BS from "react-icons/bs";
 import * as CustomIcons from "../types/icons";
@@ -117,12 +117,12 @@ export function GenerateLayout(): Array<KeyMapping>
         [
             [{ key: "Deckyboard_LCtrl", label: "LCtrl", type: 3 }],
             [{ key: "Deckyboard_LMeta", label: meta_icon, type: 4 }],
-            [{ key: "SwitchKeys_Layout", label: layout_icon, type: 4 }],
             [{ key: "Deckyboard_LAlt", label: "LAlt", type: 3 }],
             [{ key: " ", label: " ", type: 10, leftActionButton: 3, deckyKeyCode: 57 }],
             [{ key: "Deckyboard_RAlt", label: "RAlt", type: 3 }],
             [{ key: "Deckyboard_RMeta", label: meta_icon, type: 4 }],
             [{ key: "Deckyboard_RCtrl", label: "RCtrl", type: 3 }],
+            [{ key: ExtendedKeyCode, label: ExtendedKeyCodeLabel, type: 4 }],
             [{ key: "VKClose", label: vkclose_icon, type: 5, }, { key: "VKMove", type: 5, label: "#Key_Move" }],
     ]];
 
@@ -141,6 +141,57 @@ export function GenerateLayout(): Array<KeyMapping>
 }
 
 
+export const ExtendedKeyCode: string = "Deckyboard_ExGr";
+export const ExtendedKeyCodeLabel: string = "ExGr";
+var isActive: boolean = false;
+var lastLayout: any = undefined;
 
+export function IsActive() {
+    return isActive;
+}
 
+export function Activate() {
+    if (!isActive) 
+    {
+        lastLayout = KeyMapping.getKeyboardLayout();
+        if (lastLayout) 
+        {
+            isActive = true;
+            KeyMapping.setKeyboardLayout(GenerateLayout());
+        } 
+    }
+}
+
+export function Deactivate(setLayout: boolean = true) 
+{
+    if (isActive) 
+    {
+        isActive = false;
+        if (lastLayout && setLayout) 
+        {
+            KeyMapping.setKeyboardLayout(lastLayout);
+            lastLayout = undefined;
+        } 
+    }
+}
+
+export function InjectKey()
+{
+    var query = (value: KeyMapping) =>
+    {
+        if (value.definition.keys[0].key === "VKPaste") return true;
+        else return false;
+    };
+    var result = KeyMapping.findKeyboardKey(query);
+    if (result)
+    {
+        result.definition.keys[0] = new KeyEntry({
+            key: ExtendedKeyCode,
+            deckyType: KeyType.Extended,
+            label: ExtendedKeyCodeLabel,
+            type: 4
+        });
+        KeyMapping.setKeyboardKey(result);
+    }
+}
 

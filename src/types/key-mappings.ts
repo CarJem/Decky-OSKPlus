@@ -207,6 +207,18 @@ export class KeyMapping {
         this.KeyboardRoot.stateNode.setState({standardLayout: ref_standardLayout});
     }
 
+    public static getKeyboardLayout() : Array<KeyMapping> | undefined {
+        let clonedLayout = cloneDeep(this.KeyboardRoot.stateNode.state.standardLayout);
+
+        let rgLayout = clonedLayout.rgLayout as Array<Array<any>>;
+        let rgKeycodes = clonedLayout.rgKeycodes as Array<Array<any>>;
+
+        if (rgLayout && rgKeycodes) {
+            return this.layoutGen(rgLayout, rgKeycodes);
+        }
+        else return undefined;
+    }
+
     public static setKeyboardKey(mapping: KeyMapping) {
         let [x, y] = [mapping.positionX, mapping.positionY];
         var ref_standardLayout = KeyMapping.KeyboardRoot.stateNode.state.standardLayout;

@@ -9,8 +9,6 @@ import { KeyRepeat } from "./behaviors/key-repeat";
 import * as DeckyExtendedLayout from './layouts/decky-extended';
 import * as DeckyKeys from './behaviors/decky-keys';
 import * as DictationKey from './behaviors/dictation-key';
-
-import * as MoveKey from "./behaviors/move-key";
 import { runDetached, waitforCondition } from "./extensions";
 import { DismissOnEnter } from "./behaviors/dismiss-on-enter";
 
@@ -39,17 +37,10 @@ function UpdateLayout()
 {
     Style.Init();
     KeyMapping.Init();
-    MoveKey.Init();
     DismissOnEnter.ChangeState(settings?.behavior.dismissOnEnter);
 
-    let layout_name = KeyMapping.KeyboardRoot.stateNode.state.standardLayout.name;
-    if (layout_name === settings?.custom_layout.override_layout_name && settings?.custom_layout.enabled) {
-        KeyMapping.setKeyboardLayout(DeckyExtendedLayout.GenerateLayout());
-    }
-    else {
-        if (settings?.dictation.enabled)
-            KeyMapping.insertKeyboardKey(new KeyMapping(1,   4, KeyDefinition.fromCustom({ key: DictationKey.keyCode, label: <MdOutlineMic />, type: 4 }), 0));
-    }
+    if (settings?.custom_layout.enabled) DeckyExtendedLayout.InjectKey();
+    if (settings?.dictation.enabled) DictationKey.InjectKey();
 
     DeckyKeys.SyncToggleStates();
 }
@@ -71,13 +62,13 @@ function AfterTypeKeyInternal(e: any[])
 {
     const key = e[0];
 
-    MoveKey.Save();
-
     if (settings?.logging.afterInternalKeyType) 
         log("AfterTypeKeyInternal", e);
 
-    if (key.strKey == "SwitchKeys_Layout")
+    if (key.strKey == "SwitchKeys_Layout") {
+        DeckyExtendedLayout.Deactivate(false);
         runDetached(UpdateLayout);
+    }
 
     if (DeckyKeys.IsShiftKey(key.strKey)) {
         DeckyKeys.SendShiftKeys(key.strKey);
@@ -118,6 +109,7 @@ function OnOpened() {
 function OnClosed() {
     DictationKey.EndDictation();
     DeckyKeys.ResetToggleStates();
+    DeckyExtendedLayout.Deactivate();
 }
 
 function OnVisibilityChanged(isOpen: boolean) {
