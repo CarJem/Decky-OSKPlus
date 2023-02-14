@@ -96,9 +96,9 @@ export function sendShiftKeys(strKey: string) {
     if (shiftKeys.has(strKey)) {
         if (doesShiftMatch(strKey, 0)) {
             sendKeyInput(DeckySendMode.Press, KEY_CODES.get(strKey));
-            setShiftState(strKey, 2);
+            setShiftState(strKey, 1);
         }
-        else if (doesShiftMatch(strKey, 1)) {
+        else if (doesShiftMatch(strKey, 1) && doesShiftAllowLock(strKey)) {
             sendKeyInput(DeckySendMode.ShiftHold, KEY_CODES.get(strKey));
             setShiftState(strKey, 2);
         }
@@ -111,11 +111,11 @@ export function sendShiftKeys(strKey: string) {
 }
 
 export function syncShiftStates() {
-    var mappings = KeyMapping.KEYBOARD_ROOT.stateNode.state.toggleStates;
+    var updatedToggleStates = KeyMapping.KEYBOARD_ROOT.stateNode.state.toggleStates;
     shiftKeys.forEach((state, key) => {
-        mappings[key] = state;
+        updatedToggleStates[key] = state.state;
     });
-    KeyMapping.KEYBOARD_ROOT.stateNode.setState({ toggleStates: mappings });
+    KeyMapping.KEYBOARD_ROOT.stateNode.setState({ toggleStates: updatedToggleStates });
 }
 
 export function resetShiftStates() {
@@ -149,6 +149,10 @@ function sendKeyInput(mode: DeckySendMode, keyCode: number | string | undefined)
                 break;
         }
     }
+}
+
+function doesShiftAllowLock(strKey: string) {
+    return shiftKeys.get(strKey)?.lockable ?? false;
 }
 
 function doesShiftMatch(strKey: string, state: number) {
