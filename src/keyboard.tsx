@@ -1,26 +1,23 @@
 import { afterPatch, beforePatch, findInReactTree, findModuleChild, Patch } from "decky-frontend-lib";
-import { MdOutlineMic } from "react-icons/md";
 import { log } from "./logger";
-import { PluginSettings } from './types/plugin-settings';
-import { KeyDefinition, KeyMapping } from './types/key-mappings';
+import { PluginSettings } from './types/PluginSettings';
+import { KeyMapping } from './types/key-mapping/KeyMapping';
 import { ServerAPI } from "decky-frontend-lib";
 import * as Style from './style';
-import { KeyRepeat } from "./behaviors/key-repeat";
-import * as DeckyExtendedLayout from './layouts/decky-extended';
-import * as DeckyKeys from './behaviors/decky-keys';
-import * as DictationKey from './behaviors/dictation-key';
+import { KeyRepeat } from "./behaviors/KeyRepeating";
+import * as DeckyExtendedLayout from './layouts/DeckyExtended';
+import * as DeckyKeys from './behaviors/DeckyboardKeys';
+import * as DictationKey from './behaviors/DictationKey';
 import { runDetached, waitforCondition } from "./extensions";
-import { DismissOnEnter } from "./behaviors/dismiss-on-enter";
+import { DismissOnEnter } from "./behaviors/DismissOnEnter";
 
-var server: ServerAPI | undefined = undefined;
 var settings: PluginSettings | undefined = undefined;
-var SendText_Original: any;
+var sendTextPatchOriginal: any;
+var keyboardOpenedPatchCallback: any;
+var handleVirtualKeyDownPatch: Patch;
+var handleVirtualKeyUpPatch: Patch;
 
-var KeyboardOpenedCallback: any;
-var HandleVirtualKeyDownPatch: Patch;
-var HandleVirtualKeyUpPatch: Patch;
-
-const VirtualKeyboardManager = findModuleChild((m) => {
+const VIRTUAL_KEYBOARD_MANAGER = findModuleChild((m) => {
 	if (typeof m !== "object") return undefined;
 	for (let prop in m) {
 		if (m[prop]?.m_WindowStore) 
@@ -28,24 +25,43 @@ const VirtualKeyboardManager = findModuleChild((m) => {
 	}
 });
 
-const KeyboardInstance = () => { return findInReactTree(
+const KEYBOARD_INSTANCE = () => { return findInReactTree(
     (document.getElementById('root') as any)._reactRootContainer._internalRoot.current, 
     ((x) => x?.memoizedProps?.className?.startsWith('virtualkeyboard_Keyboard'))
 )};
 
-function UpdateLayout()
+export function onMount(_server: ServerAPI, _settings: PluginSettings)
 {
-    Style.Init();
-    KeyMapping.Init();
-    DismissOnEnter.ChangeState(settings?.behavior.dismissOnEnter);
+    settings = _settings;
 
-    if (settings?.custom_layout.enabled) DeckyExtendedLayout.InjectKey();
-    if (settings?.dictation.enabled) DictationKey.InjectKey();
-
-    DeckyKeys.SyncToggleStates();
+    sendTextPatchOriginal = SteamClient.Input.ControllerKeyboardSendText;
+    SteamClient.Input.ControllerKeyboardSendText = sendKeys;
+    keyboardOpenedPatchCallback = VIRTUAL_KEYBOARD_MANAGER.m_bIsVirtualKeyboardOpen.m_callbacks.Register(onVisibilityChanged);
+    DictationKey.setServer(_server);
+    DeckyKeys.setServer(_server);
 }
 
-function OnTypeKeyInternal(e: any[])
+export function onDismount()
+{
+    SteamClient.Input.ControllerKeyboardSendText = sendTextPatchOriginal;
+    keyboardOpenedPatchCallback?.Unregister();
+    handleVirtualKeyDownPatch?.unpatch();
+    handleVirtualKeyUpPatch?.unpatch();
+}
+
+function updateLayout()
+{
+    Style.init();
+    KeyMapping.init();
+    DismissOnEnter.changeState(settings?.behavior.dismissOnEnter);
+
+    if (settings?.custom_layout.enabled) DeckyExtendedLayout.injectKey();
+    if (settings?.dictation.enabled) DictationKey.injectKey();
+
+    DeckyKeys.syncShiftStates();
+}
+
+function onTypeKeyInternal(e: any[])
 {
     const key = e[0];
 
@@ -58,7 +74,7 @@ function OnTypeKeyInternal(e: any[])
     return e;
 }
 
-function AfterTypeKeyInternal(e: any[])
+function afterTypeKeyInternal(e: any[])
 {
     const key = e[0];
 
@@ -66,75 +82,55 @@ function AfterTypeKeyInternal(e: any[])
         log("AfterTypeKeyInternal", e);
 
     if (key.strKey == "SwitchKeys_Layout") {
-        DeckyExtendedLayout.Deactivate(false);
-        runDetached(UpdateLayout);
+        DeckyExtendedLayout.deactivate(false);
+        runDetached(updateLayout);
     }
 
-    if (DeckyKeys.IsShiftKey(key.strKey)) {
-        DeckyKeys.SendShiftKeys(key.strKey);
+    if (DeckyKeys.isShiftKey(key.strKey)) {
+        DeckyKeys.sendShiftKeys(key.strKey);
         return [];
     }
 
-    if (DeckyKeys.IsModifierActive() && key.strKeycode != null) {
-        DeckyKeys.SendKeys(key.strKeycode);
+    if (DeckyKeys.isModifierActive() && key.strKeycode != null) {
+        DeckyKeys.sendKeys(key.strKeycode);
     }
 
     return e;
 }
 
-function SendKeys(keyString: string) 
+function sendKeys(keyString: string) 
 {
     if (keyString.length === 0) return;
 
-    if (DeckyKeys.IsCustomKey(keyString)) DeckyKeys.SendKeys(keyString);
-    else if (!DeckyKeys.IsModifierActive()) SendText_Original.call(SteamClient.Input, keyString);
+    if (DeckyKeys.isCustomKey(keyString)) DeckyKeys.sendKeys(keyString);
+    else if (!DeckyKeys.isModifierActive()) sendTextPatchOriginal.call(SteamClient.Input, keyString);
 }
 
-function OnPatch() {
-    let instance = waitforCondition(() => KeyboardInstance());
+function onPatch() {
+    let instance = waitforCondition(() => KEYBOARD_INSTANCE());
     if (settings?.logging.init) log("keyboardInstance", instance);
     if (!instance) return;
 
-    KeyMapping.KeyboardRoot = instance.return;
-    beforePatch(KeyMapping.KeyboardRoot.stateNode, 'TypeKeyInternal', OnTypeKeyInternal);
-    afterPatch(KeyMapping.KeyboardRoot.stateNode, 'TypeKeyInternal', AfterTypeKeyInternal);
-    DeckyKeys.InitKeys();
-    UpdateLayout();
+    KeyMapping.KEYBOARD_ROOT = instance.return;
+    beforePatch(KeyMapping.KEYBOARD_ROOT.stateNode, 'TypeKeyInternal', onTypeKeyInternal);
+    afterPatch(KeyMapping.KEYBOARD_ROOT.stateNode, 'TypeKeyInternal', afterTypeKeyInternal);
+    DeckyKeys.initKeys();
+    updateLayout();
 }
 
-function OnOpened() {
-    runDetached(OnPatch);
+function onOpened() {
+    runDetached(onPatch);
 }
 
-function OnClosed() {
-    DictationKey.EndDictation();
-    DeckyKeys.ResetToggleStates();
-    DeckyExtendedLayout.Deactivate();
+function onClosed() {
+    DictationKey.endDictation();
+    DeckyKeys.resetShiftStates();
+    DeckyExtendedLayout.deactivate();
 }
 
-function OnVisibilityChanged(isOpen: boolean) {
+function onVisibilityChanged(isOpen: boolean) {
     log("isOpen", isOpen);
-    if (isOpen) OnOpened();
-    else OnClosed();
-}
-
-export function OnMount(_server: ServerAPI, _settings: PluginSettings)
-{
-    settings = _settings;
-    server = _server;
-
-    SendText_Original = SteamClient.Input.ControllerKeyboardSendText;
-    SteamClient.Input.ControllerKeyboardSendText = SendKeys;
-    KeyboardOpenedCallback = VirtualKeyboardManager.m_bIsVirtualKeyboardOpen.m_callbacks.Register(OnVisibilityChanged);
-    DictationKey.setServer(_server);
-    DeckyKeys.setServer(_server);
-}
-
-export function OnDismount()
-{
-    SteamClient.Input.ControllerKeyboardSendText = SendText_Original;
-    KeyboardOpenedCallback?.Unregister();
-    HandleVirtualKeyDownPatch?.unpatch();
-    HandleVirtualKeyUpPatch?.unpatch();
+    if (isOpen) onOpened();
+    else onClosed();
 }
 

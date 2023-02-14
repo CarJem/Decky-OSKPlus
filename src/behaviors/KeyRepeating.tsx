@@ -1,6 +1,6 @@
 import { sleep } from "decky-frontend-lib";
 import { log } from "../logger";
-import { KeyMapping } from "../types/key-mappings";
+import { KeyMapping } from '../types/key-mapping/KeyMapping';
 
 export class KeyRepeat
 {
@@ -20,13 +20,13 @@ export class KeyRepeat
 
     private static async Run(strKey: string, allowLongPress: boolean) {
         await sleep(750);
-        let state = () => {return KeyMapping.KeyboardRoot.stateNode.state;};
+        let state = () => {return KeyMapping.KEYBOARD_ROOT.stateNode.state;};
     
         if (state().keyDown.key) {
             while (state().keyDown.key == strKey) {
                 if (state().bLongPressSentKey == true && !allowLongPress) break;
                 log("state", state());
-                KeyMapping.KeyboardRoot.stateNode.TypeKeyInternal({strKey: strKey, strKeycode: this.RepeatableKeyCode});
+                KeyMapping.KEYBOARD_ROOT.stateNode.TypeKeyInternal({strKey: strKey, strKeycode: this.RepeatableKeyCode});
                 await sleep(100);
             }
         }

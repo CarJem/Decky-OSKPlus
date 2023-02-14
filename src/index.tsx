@@ -10,11 +10,11 @@ import { VFC } from "react";
 import { FaKeyboard } from "react-icons/fa";
 import * as python from './python';
 import * as keyboard from './keyboard';
-import { PluginSettings } from "./types/plugin-settings";
+import { PluginSettings } from "./types/PluginSettings";
 import * as style from "./style";
 import { log } from "./logger";
 
-const Content: VFC<{ serverAPI: ServerAPI }> = ({ }) =>
+const CONTENT: VFC<{ serverAPI: ServerAPI }> = ({ }) =>
 {
 	return (
 		<PanelSection title="Panel Section">
@@ -24,7 +24,7 @@ const Content: VFC<{ serverAPI: ServerAPI }> = ({ }) =>
 	);
 };
 
-const Settings: PluginSettings = {
+const SETTINGS: PluginSettings = {
     dictation: {
         enabled: true,
     },
@@ -54,16 +54,16 @@ const Settings: PluginSettings = {
 
 export default definePlugin((serverApi: ServerAPI) =>
 {
-	function OnDismount() {
-		if (Settings.logging.mount) log("unloaded");
-		keyboard.OnDismount();
+	function onDismount() {
+		if (SETTINGS.logging.mount) log("unloaded");
+		keyboard.onDismount();
 	}
 
-	function OnMount() {
-		if (Settings.logging.mount) log("loaded");
+	function onMount() {
+		if (SETTINGS.logging.mount) log("loaded");
 		python.setServer(serverApi);
-		style.setSettings(Settings);
-		keyboard.OnMount(serverApi, Settings);
+		style.setSettings(SETTINGS);
+		keyboard.onMount(serverApi, SETTINGS);
 
 		//serverApi.toaster.toast({
         //    title: "Deckyboard",
@@ -72,13 +72,13 @@ export default definePlugin((serverApi: ServerAPI) =>
         //});
 	}
 
-	OnMount();
+	onMount();
 
 	return {
 		title: <div className={staticClasses.Title}>DeckyBoard</div>,
-		content: <Content serverAPI={serverApi} />,
+		content: <CONTENT serverAPI={serverApi} />,
 		icon: <FaKeyboard />,
-		onDismount: OnDismount,
+		onDismount: onDismount,
 	};
 });
 

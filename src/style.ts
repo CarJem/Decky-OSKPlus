@@ -1,6 +1,6 @@
 import { findSP } from "decky-frontend-lib";
-import { PluginSettings } from "./types/plugin-settings";
-import { virtualKeyboardClasses } from './types/personal-static-classes'
+import { PluginSettings } from "./types/PluginSettings";
+import { virtualKeyboardClasses } from './types/extensions/ValveExt'
 import { waitforCondition } from "./extensions";
 
 
@@ -10,7 +10,7 @@ export function setSettings(s: PluginSettings) {
     settings = s;
 }
 
-export function Init() {
+export function init() {
     let className = virtualKeyboardClasses.Keyboard;
     let osk = waitforCondition(() => findSP().document.getElementsByClassName(className)[0] as HTMLElement);
     if (osk) {

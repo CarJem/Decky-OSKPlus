@@ -1,6 +1,6 @@
 import { findModuleChild } from "decky-frontend-lib";
 
-const VirtualKeyboardManager = findModuleChild((m) => {
+const VIRTUAL_KEYBOARD_MANAGER = findModuleChild((m) => {
     if (typeof m !== "object") return undefined;
     for (let prop in m) {
         if (m[prop]?.m_WindowStore) 
@@ -10,10 +10,10 @@ const VirtualKeyboardManager = findModuleChild((m) => {
 
 export class DismissOnEnter
 { 
-    public static ChangeState(state?: boolean) 
+    public static changeState(state?: boolean) 
     {
         if (state !== undefined)
-            VirtualKeyboardManager.m_bDismissOnEnter = state;
+            VIRTUAL_KEYBOARD_MANAGER.m_bDismissOnEnter = state;
     }
 }
 

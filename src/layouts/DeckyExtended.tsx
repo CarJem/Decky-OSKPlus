@@ -1,16 +1,21 @@
 import React, { Key } from "react";
-import { KeyEntry, KeyMapping, KeyType } from '../types/key-mappings'
+import { KeyEntry } from '../types/key-mapping/KeyEntry';
+import { KeyMapping } from '../types/key-mapping/KeyMapping';
+import { KeyType } from '../types/key-mapping/KeyType';
+import { DeckySendMode } from "../types/decky-keys/DeckySendMode";
 import * as FA from "react-icons/fa";
 import * as BS from "react-icons/bs";
 import * as CustomIcons from "../types/icons";
 import * as MD from "react-icons/md";
 import * as IO from "react-icons/io5";
-import { ServerAPI } from "decky-frontend-lib";
 
 
+export const KEY_CODE: string = "Deckyboard_ExGr";
+export const KEY_LABEL: string = "ExGr";
+var isActive: boolean = false;
+var lastLayout: any = undefined;
 
-
-export function GenerateLayout(): Array<KeyMapping>
+export function generateLayout(): Array<KeyMapping>
 {
     let play_pause = <MD.MdPlayArrow style={{ width: "auto", height: "auto" }} />;
     let arrow_up = <FA.FaArrowUp />;
@@ -122,7 +127,7 @@ export function GenerateLayout(): Array<KeyMapping>
             [{ key: "Deckyboard_RAlt", label: "RAlt", type: 3 }],
             [{ key: "Deckyboard_RMeta", label: meta_icon, type: 4 }],
             [{ key: "Deckyboard_RCtrl", label: "RCtrl", type: 3 }],
-            [{ key: ExtendedKeyCode, label: ExtendedKeyCodeLabel, type: 4 }],
+            [{ key: KEY_CODE, label: KEY_LABEL, type: 4 }],
             [{ key: "VKClose", label: vkclose_icon, type: 5, }, { key: "VKMove", type: 5, label: "#Key_Move" }],
     ]];
 
@@ -140,29 +145,23 @@ export function GenerateLayout(): Array<KeyMapping>
     return KeyMapping.layoutGen(keyList, keyCodes);
 }
 
-
-export const ExtendedKeyCode: string = "Deckyboard_ExGr";
-export const ExtendedKeyCodeLabel: string = "ExGr";
-var isActive: boolean = false;
-var lastLayout: any = undefined;
-
-export function IsActive() {
+export function getIsActive() {
     return isActive;
 }
 
-export function Activate() {
+export function activate() {
     if (!isActive) 
     {
         lastLayout = KeyMapping.getKeyboardLayout();
         if (lastLayout) 
         {
             isActive = true;
-            KeyMapping.setKeyboardLayout(GenerateLayout());
+            KeyMapping.setKeyboardLayout(generateLayout());
         } 
     }
 }
 
-export function Deactivate(setLayout: boolean = true) 
+export function deactivate(setLayout: boolean = true) 
 {
     if (isActive) 
     {
@@ -175,7 +174,7 @@ export function Deactivate(setLayout: boolean = true)
     }
 }
 
-export function InjectKey()
+export function injectKey()
 {
     var query = (value: KeyMapping) =>
     {
@@ -186,12 +185,24 @@ export function InjectKey()
     if (result)
     {
         result.definition.keys[0] = new KeyEntry({
-            key: ExtendedKeyCode,
+            key: KEY_CODE,
             deckyType: KeyType.Extended,
-            label: ExtendedKeyCodeLabel,
+            label: KEY_LABEL,
             type: 4
         });
         KeyMapping.setKeyboardKey(result);
+    }
+}
+
+export function onAction(mode: DeckySendMode)
+{
+    switch (mode) {
+        case DeckySendMode.Press:
+            activate();
+            break;
+        case DeckySendMode.Release:
+            deactivate();
+            break;
     }
 }
 
