@@ -5,7 +5,7 @@ import { KeyType } from '../types/key-mapping/KeyType';
 import { DeckySendMode } from "../types/decky-keys/DeckySendMode";
 import * as FA from "react-icons/fa";
 import * as BS from "react-icons/bs";
-import * as CustomIcons from "../types/icons";
+import * as CustomIcons from "../types/Icons";
 import * as MD from "react-icons/md";
 import * as IO from "react-icons/io5";
 
