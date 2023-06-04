@@ -1,6 +1,9 @@
 import { log } from "../../logger";
 import { cloneDeep } from "lodash";
 import { KeyDefinition } from "./KeyDefinition";
+import { fixKeyboardTheming } from "../../style";
+
+
 
 
 export class KeyMapping
@@ -60,6 +63,7 @@ export class KeyMapping
         {
             rowList.forEach((key, positionX) =>
             {
+                
                 let keyCode = keyCodes[positionY][positionX] ? keyCodes[positionY][positionX] : 0;
                 resultingLayout.push(KeyMapping.keyGen(positionY, positionX, key, keyCode));
             });
@@ -80,6 +84,8 @@ export class KeyMapping
         ref_standardLayout.rgLayout = [[], [], [], [], []];
         ref_standardLayout.rgKeycodes = [[], [], [], [], []];
 
+        var rowCounts: Array<number> = [];
+
         layout.forEach((mapping) =>
         {
             if (mapping === undefined)
@@ -87,6 +93,12 @@ export class KeyMapping
             ref_standardLayout.rgLayout[mapping.positionY].splice(mapping.positionX, 0, mapping?.definition.toInternal());
             ref_standardLayout.rgKeycodes[mapping.positionY].splice(mapping.positionX, 0, mapping?.keyCode);
         });
+
+        ref_standardLayout.rgLayout.forEach((mapping: Array<any>) => {
+            rowCounts.push(mapping.length);
+        });
+
+        fixKeyboardTheming(layout, rowCounts);
 
         this.KEYBOARD_ROOT.stateNode.setState({ standardLayout: ref_standardLayout });
     }

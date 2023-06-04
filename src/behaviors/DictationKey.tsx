@@ -1,7 +1,7 @@
 import { MdOutlineMic } from "react-icons/md";
 import { runDetached } from "../extensions";
 import { log } from "../logger";
-import * as icons from '../types/icons';
+import * as icons from '../types/Icons';
 import { KeyDefinition } from "../types/key-mapping/KeyDefinition";
 import { KeyMapping } from '../types/key-mapping/KeyMapping';
 import { DeckySendMode } from "../types/decky-keys/DeckySendMode";
