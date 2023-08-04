@@ -4,91 +4,49 @@ import
 	PanelSection,
 	PanelSectionRow,
 	ServerAPI,
-	staticClasses,
-	findModuleChild,
-	findInReactTree
+	staticClasses
 } from "decky-frontend-lib";
 import { VFC } from "react";
 import { FaKeyboard } from "react-icons/fa";
-import { log } from "./logger";
 import * as python from './python';
-import * as keys from './keyboard';
-import { PluginSettings } from "./types/settings";
-import * as keys_dictation from "./keys/dictation";
-import * as keys_orientation from "./keys/orientation";
+import * as keyboard from './keyboard';
+import { PluginSettings } from "./types/PluginSettings";
 import * as style from "./style";
+import { log } from "./logger";
+import * as QAM from "./ui/qam"
+import SettingsPage from './ui/settings/index'
 
-const Content: VFC<{ serverAPI: ServerAPI }> = ({ }) =>
-{
-	return (
-		<PanelSection title="Panel Section">
-			<PanelSectionRow>
-			</PanelSectionRow>
-		</PanelSection>
-	);
-};
+const CONTENT: VFC<{ serverAPI: ServerAPI }> = QAM.default;
 
-const Settings: PluginSettings = {
-	DictationEnabled: true,
-	EnableFunctionKeys: false,
-	EnableCtrlKey: false,
-	EnableAltKey: false,
-	EnableEscKey: false,
-	EnableOrientationSwapKey: true,
-	UnlockKeyboardMaxLength: false
-};
 
-const KeyboardManager = findModuleChild((m) => {
-	if (typeof m !== "object") return undefined;
-	for (let prop in m) {
-		if (m[prop]?.m_WindowStore) 
-			return m[prop].ActiveWindowInstance.VirtualKeyboardManager;
-	}
-});
 
 export default definePlugin((serverApi: ServerAPI) =>
 {
+	
 
-	var KeyboardOpenedCallback: any;
-
-	function OnCallback(e: boolean) {
-		log("isOpened", e)
-		if (!e) return;
-
-		setTimeout(() => {
-			let instance = findInReactTree(
-				(document.getElementById('root') as any)._reactRootContainer._internalRoot.current, 
-				((x) => x?.memoizedProps?.className?.startsWith('virtualkeyboard_Keyboard'))
-			);			
-			log("keyboardInstance", instance);
-			if (instance) keys.Init(instance);
-		}, 10);
+	function onDismount() {
+		if (PluginSettings.data.logging.mount) log("unloaded");
+		keyboard.onDismount();
 	}
 
-	function OnDismount() {
-		KeyboardOpenedCallback?.Unregister();
-	}
-
-	function OnMount() {
+	async function onMount() {
+		await PluginSettings.init(serverApi);
+		if (PluginSettings.data.logging.mount) log("loaded");
 		python.setServer(serverApi);
-		keys.setServer(serverApi);
-		keys_orientation.setServer(serverApi);
-		keys_orientation.setServer(serverApi);
-		keys_dictation.setServer(serverApi);
+		keyboard.onMount(serverApi);
 
-		keys.setSettings(Settings);
-		style.setSettings(Settings);
-
-		KeyboardOpenedCallback = KeyboardManager.m_bIsVirtualKeyboardOpen.m_callbacks.Register(OnCallback)
+		serverApi.routerHook.addRoute("/deckyboard/settings", () => (
+			<SettingsPage serverAPI={serverApi}></SettingsPage>
+		));
 	}
 
-	OnMount();
+	onMount();
 
 	return {
 		title: <div className={staticClasses.Title}>DeckyBoard</div>,
-		content: <Content serverAPI={serverApi} />,
+		content: <CONTENT serverAPI={serverApi} />,
 		icon: <FaKeyboard />,
-		onDismount: OnDismount,
+		onDismount: onDismount,
 	};
 });
 

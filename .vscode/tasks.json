@@ -7,7 +7,7 @@
             "type": "shell",
             "group": "none",
             "detail": "Check that settings.json has been created",
-            "command": "bash -c ${workspaceFolder}/.vscode/config.sh",
+            "command": "bash -c \"'${workspaceFolder}/.vscode/config.sh'\"",
             "problemMatcher": []
         },
         // BUILD

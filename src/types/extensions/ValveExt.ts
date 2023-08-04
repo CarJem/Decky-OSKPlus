@@ -6,7 +6,7 @@ type VirtualKeyboardClasses = Record <
 >;
 
 export const virtualKeyboardClasses: VirtualKeyboardClasses = findModule(
-    (mod) => typeof mod === 'object' && mod?.Keyboard?.includes('virtualkeyboard_'),
+    (mod) => typeof mod === 'object' && mod?.Keyboard?.includes && mod?.Keyboard?.includes('virtualkeyboard_'),
 );
 
 type VirtualKeyboardContainerClasses = Record <

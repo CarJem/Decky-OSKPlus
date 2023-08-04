@@ -1,126 +1,136 @@
-import { beforePatch } from "decky-frontend-lib";
-import { FaMicrophone, FaArrowUp } from "react-icons/fa";
+import { afterPatch, beforePatch, findInReactTree, findModuleChild, Patch } from "decky-frontend-lib";
 import { log } from "./logger";
-import { PluginSettings } from './types/settings';
-import * as dictation from './keys/dictation';
-import * as orientation from './keys/orientation';
-import { KeyDefinition, KeyMapping } from './types/key-mappings';
+import { PluginSettings, PluginSettingsImpl } from './types/PluginSettings';
+import { KeyMapping } from './types/key-mapping/KeyMapping';
 import { ServerAPI } from "decky-frontend-lib";
-import * as style from './style';
+import * as Style from './style';
+import { KeyRepeat } from "./behaviors/KeyRepeating";
+import * as DeckyExtendedLayout from './layouts/DeckyExtended';
+import * as DeckyKeys from './behaviors/DeckyboardKeys';
+import * as DictationKey from './behaviors/DictationKey';
+import { runDetached, waitforCondition } from "./extensions";
+import { DismissOnEnter } from "./behaviors/DismissOnEnter";
 
-var server: ServerAPI | undefined = undefined;
-var settings: PluginSettings | undefined = undefined;
-var KeyboardRoot: any;
+var sendTextPatchOriginal: any;
+var keyboardOpenedPatchCallback: any;
+var handleVirtualKeyDownPatch: Patch;
+var handleVirtualKeyUpPatch: Patch;
+var serverAPI: ServerAPI;
 
-const KeyMappings: Map<string, KeyMapping> = new Map<string, KeyMapping>([
-    [dictation.KeyCode,       { row: 4,  offset: 1,  definition: { key: "SwitchKeys_Dicate", label: <FaMicrophone />, type: 4 }}],
-    ["alt_key",               { row: 4,  offset: 0,  definition: { key: "SwitchKeys_Alt", label: "#Key_Alt", type: 5 }}],
-    ["ctrl_key",              { row: 4,  offset: 0,  definition: { key: "SwitchKeys_Control", label: "#Key_Control", type: 5 }}],
-    ["esc_key",               { row: 0,  offset: 0,  definition: { key: "SwitchKeys_Escape", label: "#Key_Escape", type: 4 }}],
-    [orientation.KeyCode,     { row: 4,  offset: -1, definition: { key: "SwitchKeys_Orientation", label: <FaArrowUp />, type: 4 }}],
-  //["function_f1_key",       { row: 0,  offset: 0,  definition: { key: "", label: "#KeyboardKey_F1",  type: 5}}],
-]);
+const VIRTUAL_KEYBOARD_MANAGER = findModuleChild((m) => {
+	if (typeof m !== "object") return undefined;
+	for (let prop in m) {
+		if (m[prop]?.m_WindowStore) 
+			return m[prop].ActiveWindowInstance.VirtualKeyboardManager;
+	}
+});
 
-export function setServer(s: ServerAPI) {
-  server = s;
+const KEYBOARD_INSTANCE = () => { return findInReactTree(
+    (document.getElementById('root') as any)._reactRootContainer._internalRoot.current, 
+    ((x) => x?.memoizedProps?.className?.startsWith('virtualkeyboard_Keyboard'))
+)};
+
+export function onMount(_server: ServerAPI)
+{
+    serverAPI = _server;
+    sendTextPatchOriginal = SteamClient.Input.ControllerKeyboardSendText;
+    SteamClient.Input.ControllerKeyboardSendText = sendKeys;
+    keyboardOpenedPatchCallback = VIRTUAL_KEYBOARD_MANAGER.m_bIsVirtualKeyboardOpen.m_callbacks.Register(onVisibilityChanged);
+    DictationKey.setServer(_server);
+    DeckyKeys.setServer(_server);
 }
 
-export function setSettings(s: PluginSettings) {
-    settings = s;
+export function onDismount()
+{
+    SteamClient.Input.ControllerKeyboardSendText = sendTextPatchOriginal;
+    keyboardOpenedPatchCallback?.Unregister();
+    handleVirtualKeyDownPatch?.unpatch();
+    handleVirtualKeyUpPatch?.unpatch();
 }
 
-export function Init(instance: any) {
-    KeyboardRoot = instance.return;
-    UpdateLayout();
-    setTimeout(style.Init, 10);
-    beforePatch(KeyboardRoot.stateNode, 'TypeKeyInternal', (e: any[]) =>
-    {
-        //log("stateNode", KeyboardRoot.stateNode);
-        OnType(e);
-        return KeyboardRoot.stateNode;
-    });
-    return;
+async function updateLayout()
+{
+    await PluginSettings.update(serverAPI);
+    Style.init();
+    KeyMapping.init();
+    DismissOnEnter.changeState(PluginSettings.data.behavior.dismissOnEnter);
+
+    if (PluginSettings.data.custom_layout.enabled) DeckyExtendedLayout.injectKey();
+    if (PluginSettings.data.dictation.enabled) DictationKey.injectKey();
+
+    DeckyKeys.syncShiftStates();
 }
 
-function UpdateLayout() {
-    //log("keys", KeyboardRoot)
-    //log("keys", KeyboardRoot.stateNode.state.standardLayout.rgLayout);
-
-    
-    //log("beforeLayoutClone", KeyboardRoot.stateNode.state.standardLayout);
-    //KeyboardRoot.stateNode.state.standardLayout = JSON.parse(JSON.stringify(KeyboardRoot.stateNode.state.standardLayout));
-    //log("afterLayoutClone", KeyboardRoot.stateNode.state.standardLayout);
-
-
-    KeyMappings.forEach(function (value) {
-        RemoveKey(value)
-    }); 
-
-    if (settings?.DictationEnabled) AddKey(KeyMappings.get(dictation.KeyCode));
-
-    if (settings?.EnableAltKey) AddKey(KeyMappings.get("alt_key"));
-    if (settings?.EnableCtrlKey) AddKey(KeyMappings.get("ctrl_key"));
-    if (settings?.EnableEscKey) AddKey(KeyMappings.get("esc_key"));
-
-    if (settings?.EnableOrientationSwapKey) {
-        AddKey(KeyMappings.get(orientation.KeyCode));
-        orientation.Init();
-    } 
-    //if (settings?.EnableFunctionKeys) AddKey(KeyMappings.get("function_f1_key"));
-
-}
-
-function OnType(e: any[]) {
+function onTypeKeyInternal(e: any[])
+{
     const key = e[0];
-    log("key", key);
 
-    //if (key.strKey == "SwitchKeys_")
-    //{
-    //    server?.fetchNoCors('http://localhost:9000/hooks/ydotool?key=41')
-    //        .then((data) => console.log(data));
-    //}
+    if (PluginSettings.data.logging.internalKeyType) 
+        log("OnTypeKeyInternal", e);
 
-    if (key.strKey == "SwitchKeys_Layout")
-        setTimeout(UpdateLayout, 10);
+    if (KeyRepeat.IsRepeatable(key.strKey) && key.strKeycode !== KeyRepeat.RepeatableKeyCode && PluginSettings.data.behavior.allowKeyRepeat)
+        KeyRepeat.Trigger(key.strKey);
 
-    if (key.strKey == KeyMappings.get(orientation.KeyCode)?.definition.key) 
-        orientation.OnOrientationKey();
-
-    if (settings?.DictationEnabled && key.strKey == KeyMappings.get(dictation.KeyCode)?.definition.key) 
-        dictation.ToggleDictation();
+    return e;
 }
 
-function AddKey(value: KeyMapping | undefined) {
-    if (value) {
-        let index = value.offset;
-        KeyboardRoot.stateNode.state.standardLayout.rgLayout[value?.row].splice(index, 0 ,value?.definition);
+function afterTypeKeyInternal(e: any[])
+{
+    const key = e[0];
+
+    if (PluginSettings.data.logging.afterInternalKeyType) 
+        log("AfterTypeKeyInternal", e);
+
+    if (key.strKey == "SwitchKeys_Layout") {
+        DeckyExtendedLayout.deactivate(false);
+        runDetached(updateLayout);
     }
-}
 
-function RemoveKey(value: KeyMapping) {
-    var i = 0;
-    var rN = value.row;
-    while (i < KeyboardRoot.stateNode.state.standardLayout.rgLayout[rN].length) {
-      if (KeyboardRoot.stateNode.state.standardLayout.rgLayout[rN][i].key === value.definition.key) {
-        KeyboardRoot.stateNode.state.standardLayout.rgLayout[rN].splice(i, 1);
-      } else {
-        ++i;
-      }
+    if (DeckyKeys.isShiftKey(key.strKey)) {
+        DeckyKeys.sendShiftKeys(key.strKey);
+        return [];
     }
-}
 
-function ChangeKeyLabel(value: KeyMapping, label: any) {
-    var rN = value.row;
-    for (let i = 0; i < KeyboardRoot.stateNode.state.standardLayout.rgLayout[rN].length; i++) 
-    {
-      if (KeyboardRoot.stateNode.state.standardLayout.rgLayout[rN][i].key === value.definition.key)  {
-          KeyboardRoot.stateNode.state.standardLayout.rgLayout[rN][i].label = label; 
-      }
+    if (DeckyKeys.isModifierActive() && key.strKeycode != null) {
+        DeckyKeys.sendKeys(key.strKeycode);
     }
+
+    return e;
 }
 
-export function ChangeKeyLabelById(value: string, label: any) {
-    let result = KeyMappings.get(value);
-    if (result) ChangeKeyLabel(result, label);
+function sendKeys(keyString: string) 
+{
+    if (keyString.length === 0) return;
+
+    if (DeckyKeys.isCustomKey(keyString)) DeckyKeys.sendKeys(keyString);
+    else if (!DeckyKeys.isModifierActive()) sendTextPatchOriginal.call(SteamClient.Input, keyString);
+}
+
+function onPatch() {
+    let instance = waitforCondition(() => KEYBOARD_INSTANCE());
+    if (PluginSettings.data.logging.init) log("keyboardInstance", instance);
+    if (!instance) return;
+
+    KeyMapping.KEYBOARD_ROOT = instance.return;
+    beforePatch(KeyMapping.KEYBOARD_ROOT.stateNode, 'TypeKeyInternal', onTypeKeyInternal);
+    afterPatch(KeyMapping.KEYBOARD_ROOT.stateNode, 'TypeKeyInternal', afterTypeKeyInternal);
+    DeckyKeys.initKeys();
+    updateLayout();
+}
+
+function onOpened() {
+    runDetached(onPatch);
+}
+
+function onClosed() {
+    DictationKey.endDictation();
+    DeckyKeys.resetShiftStates();
+    DeckyExtendedLayout.deactivate();
+}
+
+function onVisibilityChanged(isOpen: boolean) {
+    log("isOpen", isOpen);
+    if (isOpen) onOpened();
+    else onClosed();
 }
 

@@ -1,6 +1,8 @@
+const logsTitle = 'DeckyBoard';
+
 export const log = (name: string, ...args: any[]) => {
     console.log(
-        `%c Deckboard %c ${name} %c`,
+        `%c ${logsTitle} %c ${name} %c`,
         'background: #16a085; color: black;',
         'background: #1abc9c; color: black;',
         'background: transparent;',
@@ -10,7 +12,7 @@ export const log = (name: string, ...args: any[]) => {
 
 export const debug = (name: string, ...args: any[]) => {
     console.debug(
-        `%c Deckboard %c ${name} %c`,
+        `%c ${logsTitle} %c ${name} %c`,
         'background: #16a085; color: black;',
         'background: #1abc9c; color: black;',
         'color: blue;',
@@ -20,7 +22,7 @@ export const debug = (name: string, ...args: any[]) => {
 
 export const error = (name: string, ...args: any[]) => {
     console.error(
-        `%c Deckboard %c ${name} %c`,
+        `%c ${logsTitle} %c ${name} %c`,
         'background: #16a085; color: black;',
         'background: #FF0000;',
         'background: transparent;',
