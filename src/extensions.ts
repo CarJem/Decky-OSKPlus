@@ -1,4 +1,4 @@
-export function waitforCondition<T>(method: () => T, maxWait: number = 1000) : T | undefined {
+export function waitforCondition<T>(method: () => T, maxWait: number = 1000): T | undefined {
     let result = undefined;
     let i = 0;
     while (result === undefined && i < maxWait) {

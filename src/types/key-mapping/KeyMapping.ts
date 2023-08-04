@@ -27,11 +27,16 @@ export class KeyMapping
     {
         log("beforeLayoutClone", this.KEYBOARD_ROOT.stateNode.state.standardLayout);
         let clonedLayout = cloneDeep(this.KEYBOARD_ROOT.stateNode.state.standardLayout);
+        
+        //Special Patch to work with Valve's new Rules for Keys
+        clonedLayout.refLayout = clonedLayout.rgLayout(this.KEYBOARD_ROOT.stateNode.GetLayoutOptions());
+        clonedLayout.rgLayout_org = clonedLayout.rgLayout;
+        clonedLayout.rgLayout = (e: any) => clonedLayout.refLayout;
 
         if (clonedLayout.rgKeycodes == undefined)
         {
             clonedLayout.rgKeycodes = new Array<Array<any>>();
-            let layout = clonedLayout.rgLayout as Array<Array<any>>;
+            let layout = clonedLayout.refLayout as Array<Array<any>>;
             layout.forEach((row, positionY) =>
             {
                 clonedLayout.rgKeycodes.push(new Array<any>());
@@ -81,7 +86,7 @@ export class KeyMapping
     public static setKeyboardLayout(layout: Array<KeyMapping>)
     {
         var ref_standardLayout = KeyMapping.KEYBOARD_ROOT.stateNode.state.standardLayout;
-        ref_standardLayout.rgLayout = [[], [], [], [], []];
+        ref_standardLayout.refLayout = [[], [], [], [], []];
         ref_standardLayout.rgKeycodes = [[], [], [], [], []];
 
         var rowCounts: Array<number> = [];
@@ -90,11 +95,11 @@ export class KeyMapping
         {
             if (mapping === undefined)
                 return;
-            ref_standardLayout.rgLayout[mapping.positionY].splice(mapping.positionX, 0, mapping?.definition.toInternal());
+            ref_standardLayout.refLayout[mapping.positionY].splice(mapping.positionX, 0, mapping?.definition.toInternal());
             ref_standardLayout.rgKeycodes[mapping.positionY].splice(mapping.positionX, 0, mapping?.keyCode);
         });
 
-        ref_standardLayout.rgLayout.forEach((mapping: Array<any>) => {
+        ref_standardLayout.refLayout.forEach((mapping: Array<any>) => {
             rowCounts.push(mapping.length);
         });
 
@@ -107,12 +112,12 @@ export class KeyMapping
     {
         let clonedLayout = cloneDeep(this.KEYBOARD_ROOT.stateNode.state.standardLayout);
 
-        let rgLayout = clonedLayout.rgLayout as Array<Array<any>>;
+        let refLayout = clonedLayout.refLayout as Array<Array<any>>;
         let rgKeycodes = clonedLayout.rgKeycodes as Array<Array<any>>;
 
-        if (rgLayout && rgKeycodes)
+        if (refLayout && rgKeycodes)
         {
-            return this.layoutGen(rgLayout, rgKeycodes);
+            return this.layoutGen(refLayout, rgKeycodes);
         }
         else
             return undefined;
@@ -122,14 +127,14 @@ export class KeyMapping
     {
         let [x, y] = [mapping.positionX, mapping.positionY];
         var ref_standardLayout = KeyMapping.KEYBOARD_ROOT.stateNode.state.standardLayout;
-        ref_standardLayout.rgLayout[y][x] = mapping.definition.toInternal();
+        ref_standardLayout.refLayout[y][x] = mapping.definition.toInternal();
         ref_standardLayout.rgKeycodes[y][x] = mapping.keyCode;
         this.KEYBOARD_ROOT.stateNode.setState({ standardLayout: ref_standardLayout });
     }
 
     public static getKeyboardKey(x: number, y: number): KeyMapping
     {
-        let value = this.KEYBOARD_ROOT.stateNode.state.standardLayout.rgLayout[y][x];
+        let value = this.KEYBOARD_ROOT.stateNode.state.standardLayout.refLayout[y][x];
         let keyCode = this.KEYBOARD_ROOT.stateNode.state.standardLayout.rgKeycodes[y][x] ? this.KEYBOARD_ROOT.stateNode.state.standardLayout.rgKeycodes[y][x] : 0;
         return new KeyMapping(x, y, KeyDefinition.fromAny(value), keyCode);
     }
@@ -141,16 +146,16 @@ export class KeyMapping
         if (mapping === undefined)
             return;
         var ref_standardLayout = KeyMapping.KEYBOARD_ROOT.stateNode.state.standardLayout;
-        ref_standardLayout.rgLayout[mapping.positionY].splice(mapping.positionX, 0, mapping?.definition.toInternal());
+        ref_standardLayout.refLayout[mapping.positionY].splice(mapping.positionX, 0, mapping?.definition.toInternal());
         ref_standardLayout.rgKeycodes[mapping.positionY].splice(mapping.positionX, 0, mapping?.keyCode);
         this.KEYBOARD_ROOT.stateNode.setState({ standardLayout: ref_standardLayout });
     }
 
     public static findKeyboardKey(query: (value: KeyMapping) => boolean): KeyMapping | undefined
     {
-        for (let y = 0; y < this.KEYBOARD_ROOT.stateNode.state.standardLayout.rgLayout.length; y++)
+        for (let y = 0; y < this.KEYBOARD_ROOT.stateNode.state.standardLayout.refLayout.length; y++)
         {
-            for (let x = 0; x < this.KEYBOARD_ROOT.stateNode.state.standardLayout.rgLayout[y].length; x++)
+            for (let x = 0; x < this.KEYBOARD_ROOT.stateNode.state.standardLayout.refLayout[y].length; x++)
             {
                 let key = this.getKeyboardKey(x, y);
                 if (query(key))

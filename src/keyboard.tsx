@@ -1,6 +1,6 @@
 import { afterPatch, beforePatch, findInReactTree, findModuleChild, Patch } from "decky-frontend-lib";
 import { log } from "./logger";
-import { PluginSettings } from './types/PluginSettings';
+import { PluginSettings, PluginSettingsImpl } from './types/PluginSettings';
 import { KeyMapping } from './types/key-mapping/KeyMapping';
 import { ServerAPI } from "decky-frontend-lib";
 import * as Style from './style';
@@ -11,11 +11,11 @@ import * as DictationKey from './behaviors/DictationKey';
 import { runDetached, waitforCondition } from "./extensions";
 import { DismissOnEnter } from "./behaviors/DismissOnEnter";
 
-var settings: PluginSettings | undefined = undefined;
 var sendTextPatchOriginal: any;
 var keyboardOpenedPatchCallback: any;
 var handleVirtualKeyDownPatch: Patch;
 var handleVirtualKeyUpPatch: Patch;
+var serverAPI: ServerAPI;
 
 const VIRTUAL_KEYBOARD_MANAGER = findModuleChild((m) => {
 	if (typeof m !== "object") return undefined;
@@ -30,10 +30,9 @@ const KEYBOARD_INSTANCE = () => { return findInReactTree(
     ((x) => x?.memoizedProps?.className?.startsWith('virtualkeyboard_Keyboard'))
 )};
 
-export function onMount(_server: ServerAPI, _settings: PluginSettings)
+export function onMount(_server: ServerAPI)
 {
-    settings = _settings;
-
+    serverAPI = _server;
     sendTextPatchOriginal = SteamClient.Input.ControllerKeyboardSendText;
     SteamClient.Input.ControllerKeyboardSendText = sendKeys;
     keyboardOpenedPatchCallback = VIRTUAL_KEYBOARD_MANAGER.m_bIsVirtualKeyboardOpen.m_callbacks.Register(onVisibilityChanged);
@@ -49,14 +48,15 @@ export function onDismount()
     handleVirtualKeyUpPatch?.unpatch();
 }
 
-function updateLayout()
+async function updateLayout()
 {
+    await PluginSettings.update(serverAPI);
     Style.init();
     KeyMapping.init();
-    DismissOnEnter.changeState(settings?.behavior.dismissOnEnter);
+    DismissOnEnter.changeState(PluginSettings.data.behavior.dismissOnEnter);
 
-    if (settings?.custom_layout.enabled) DeckyExtendedLayout.injectKey();
-    if (settings?.dictation.enabled) DictationKey.injectKey();
+    if (PluginSettings.data.custom_layout.enabled) DeckyExtendedLayout.injectKey();
+    if (PluginSettings.data.dictation.enabled) DictationKey.injectKey();
 
     DeckyKeys.syncShiftStates();
 }
@@ -65,10 +65,10 @@ function onTypeKeyInternal(e: any[])
 {
     const key = e[0];
 
-    if (settings?.logging.internalKeyType) 
+    if (PluginSettings.data.logging.internalKeyType) 
         log("OnTypeKeyInternal", e);
 
-    if (KeyRepeat.IsRepeatable(key.strKey) && key.strKeycode !== KeyRepeat.RepeatableKeyCode && settings?.behavior.allowKeyRepeat)
+    if (KeyRepeat.IsRepeatable(key.strKey) && key.strKeycode !== KeyRepeat.RepeatableKeyCode && PluginSettings.data.behavior.allowKeyRepeat)
         KeyRepeat.Trigger(key.strKey);
 
     return e;
@@ -78,7 +78,7 @@ function afterTypeKeyInternal(e: any[])
 {
     const key = e[0];
 
-    if (settings?.logging.afterInternalKeyType) 
+    if (PluginSettings.data.logging.afterInternalKeyType) 
         log("AfterTypeKeyInternal", e);
 
     if (key.strKey == "SwitchKeys_Layout") {
@@ -108,7 +108,7 @@ function sendKeys(keyString: string)
 
 function onPatch() {
     let instance = waitforCondition(() => KEYBOARD_INSTANCE());
-    if (settings?.logging.init) log("keyboardInstance", instance);
+    if (PluginSettings.data.logging.init) log("keyboardInstance", instance);
     if (!instance) return;
 
     KeyMapping.KEYBOARD_ROOT = instance.return;

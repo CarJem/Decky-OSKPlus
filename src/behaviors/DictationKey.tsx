@@ -6,6 +6,7 @@ import { KeyDefinition } from "../types/key-mapping/KeyDefinition";
 import { KeyMapping } from '../types/key-mapping/KeyMapping';
 import { DeckySendMode } from "../types/decky-keys/DeckySendMode";
 import { ServerAPI } from "decky-frontend-lib";
+import { PluginSettings } from "../types/PluginSettings";
 
 let dictateListening: boolean = false;
 let server: ServerAPI | undefined = undefined;
