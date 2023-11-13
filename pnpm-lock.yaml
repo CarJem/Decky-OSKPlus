@@ -1,4 +1,4 @@
-lockfileVersion: '6.1'
+lockfileVersion: '6.0'
 
 settings:
   autoInstallPeers: true
@@ -12,8 +12,8 @@ dependencies:
     specifier: ^4.5.7
     version: 4.5.7
   decky-frontend-lib:
-    specifier: ^3.21.1
-    version: 3.21.1
+    specifier: ^3.23.1
+    version: 3.23.1
   lodash:
     specifier: ^4.17.21
     version: 4.17.21
@@ -453,8 +453,8 @@ packages:
     resolution: {integrity: sha512-uX1KG+x9h5hIJsaKR9xHUeUraxf8IODOwq9JLNPq6BwB04a/xgpq3rcx47l5BZu5zBPlgD342tdke3Hom/nJRA==}
     dev: true
 
-  /decky-frontend-lib@3.21.1:
-    resolution: {integrity: sha512-30605ET9qqZ6St6I9WmMmLGgSrTIdMwo7xy85+lRaF1miUd2icOGEJjwnbVcZDdkal+1fJ3tNEDXlchVfG4TrA==}
+  /decky-frontend-lib@3.23.1:
+    resolution: {integrity: sha512-6JKtSCjk5liJ+xBqOPZvPSp1HdkaQ+j/I19bGSk+cWuxSrodyduduXKJE4p4GJ/+KgFdn0yg/8tRi+DSqmBvdw==}
     dev: false
 
   /deepmerge@4.2.2:

@@ -144,9 +144,6 @@ function sendKeyInput(mode: DeckySendMode, keyCode: number | string | undefined)
             case DeckySendMode.Press:
                 server?.callPluginMethod<any, boolean>("keyPress", {"keyCode": keyCode});
                 break;
-            case DeckySendMode.Type:
-                server?.callPluginMethod<any, boolean>("typeText", {"text": keyCode});
-                break;
         }
     }
 }

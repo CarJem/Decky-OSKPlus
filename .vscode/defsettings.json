@@ -1,9 +1,11 @@
 {
-    "deckip"    : "0.0.0.0",
+    "deckip"    : "steamdeck.local",
     "deckport"  : "22",
-    "deckpass"  : "ssap",
+    "deckuser"  : "deck",
+    "deckpass"  : "",
     "deckkey"   : "-i ${env:HOME}/.ssh/id_rsa",
     "deckdir"   : "/home/deck",
+    "pluginname": "Decky-OSKPlus",
     "python.analysis.extraPaths": [
         "./py_modules"
     ]
